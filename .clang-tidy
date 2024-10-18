@@ -1,0 +1,97 @@
+# The following checks are disabled for various reasons:
+# bugprone-macro-parentheses seems to leak warnings from system includes (needs further investigation)
+# cert-dcl21-cpp recommends making postfix ++ and -- operators return const objects, however this interferes with
+#                move semantics, and the issue is better resolved by lvalue-ref qualifying the operator instead
+# clang-analyzer-* currently causes a lot of false positives
+# cppcoreguidelines-macro-usage causes a lot of false positives even when something can't be implemented without macros
+# cppcoreguidelines-owning-memory requires the use of gsl::owner
+# cppcoreguidelines-pro-bounds-array-to-pointer-decay (same as hicpp-no-array-decay)
+# cppcoreguidelines-pro-bounds-constant-array-index recommends gsl::at over operator[], but operator[] of any reasonable
+#                                                   container should already assert it's preconditions
+# cppcoreguidelines-pro-type-union-access triggers for accessing glm type members
+# hicpp-no-array-decay warns on each use of the `assert` macro on Linux (https://reviews.llvm.org/D88833)
+# hicpp-uppercase-literal-suffix is very noisy and of questionable usefulness
+# misc-misplaced-const is very noisy, especially when interacting with C APIs
+# misc-no-recursion is currently quite noisy, although it finds legitimate issues, so we should turn it on later
+# modernize-use-trailing-return-type currently goes against our code style
+# performance-unnecessary-value-param is noisy when arguments are known to always be constructed in-place
+# readability-function-cognitive-complexity currently flags multiple functions, should turn on later and refactor
+# readability-identifier-length is noisy in some reasonable cases - ideally, needs to be tuned and turned on
+# readability-implicit-bool-conversion doesn't allow some often used constructs, maybe enable in the future
+# readability-uppercase-literal-suffix (same as hicpp-uppercase-literal-suffix)
+#
+# The following checks are disabled because they have shorter aliases than can be used in NOLINT comments:
+# cert-msc32-c == cert-msc51-cpp (msc32-c is shorter but our code base is C++ so use msc51-cpp)
+# cppcoreguidelines-avoid-c-arrays == hicpp-avoid-c-arrays
+# cppcoreguidelines-avoid-magic-numbers == readability-magic-numbers
+# cppcoreguidelines-no-malloc == hicpp-no-malloc
+# cppcoreguidelines-pro-type-member-init == hicpp-member-init
+# cppcoreguidelines-special-member-functions == hicpp-special-member-functions
+# modernize-avoid-c-arrays == hicpp-avoid-c-arrays
+# modernize-deprecated-headers == hicpp-deprecated-headers
+# modernize-use-equals-default == hicpp-use-equals-default
+# modernize-use-nullptr == hicpp-use-nullptr
+# performance-move-const-arg == hicpp-move-const-arg
+# readability-braces-around-statements == hicpp-braces-around-statements
+Checks: >
+  -*,
+  android-*,
+  boost-*,
+  bugprone-*,
+  -bugprone-macro-parentheses,
+  cert-*,
+  -cert-dcl21-cpp,
+  -cert-msc32-c,
+  concurrency-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-no-malloc,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-type-member-init,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-special-member-functions,
+  google-default-arguments,
+  google-global-names-in-headers,
+  google-readability-casting,
+  google-runtime-int,
+  google-runtime-operator,
+  hicpp-*,
+  -hicpp-no-array-decay,
+  -hicpp-uppercase-literal-suffix,
+  misc-*,
+  -misc-misplaced-const,
+  -misc-no-recursion,
+  modernize-*,
+  -modernize-avoid-c-arrays,
+  -modernize-deprecated-headers,
+  -modernize-use-equals-default,
+  -modernize-use-nullptr,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  -performance-move-const-arg,
+  -performance-unnecessary-value-param,
+  portability-*,
+  readability-*,
+  -readability-braces-around-statements,  
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-uppercase-literal-suffix
+HeaderFilterRegex: '.+\.h(pp)?'
+AnalyzeTemporaryDtors: true
+FormatStyle: file
+InheritParentConfig: false
+CheckOptions:
+  # A single default destructor is a common case if it is virtual or protected
+  - key: hicpp-special-member-functions.AllowSoleDefaultDtor
+    value: true
+  # Without this option the check warns even about structs with all public members
+  - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: true
+  # For now, ignore all floating point values TODO: Decide how to handle this better
+  - key: readability-magic-numbers.IgnoreAllFloatingPointValues
+    value: true
