@@ -42,7 +42,7 @@ namespace detail {
 
 } // namespace detail
 
-[[nodiscard]] window_extent_s window_extent_from_json(const json::value &extent_desc) {
+[[nodiscard]] window_extent_s window_extent_from_json(const json::value &extent_desc) noexcept {
     return {.width = json::value_to<std::int32_t>(extent_desc.at("width")),
             .height = json::value_to<std::int32_t>(extent_desc.at("height"))};
 }
@@ -50,7 +50,7 @@ namespace detail {
     return {{"width", extent.width}, {"height", extent.height}};
 }
 
-[[nodiscard]] window_position_s window_position_from_json(const json::value &position_desc) {
+[[nodiscard]] window_position_s window_position_from_json(const json::value &position_desc) noexcept {
     return {.x = json::value_to<std::int32_t>(position_desc.at("x")),
             .y = json::value_to<std::int32_t>(position_desc.at("y"))};
 }
@@ -62,7 +62,7 @@ namespace detail {
     const auto &mode_str = desc.as_string();
     return detail::window_mode_string_to_enum(mode_str);
 }
-[[nodiscard]] json::value window_mode_to_json(const window_mode_e mode) {
+[[nodiscard]] json::value window_mode_to_json(const window_mode_e mode) noexcept {
     return detail::window_mode_enum_to_string(mode).c_str();
 }
 

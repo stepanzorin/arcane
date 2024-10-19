@@ -1,20 +1,16 @@
-#include <stdexcept>
+#include <cstdlib>
+#include <exception>
 
-#include <fmt/printf.h>
 #include <spdlog/spdlog.h>
 
 #include "app_config.hpp"
+#include "application.hpp"
 
 using namespace sm::arcane;
 
 int main() try {
-    const auto app_config = app_config_from_json();
-    fmt::print("Project: {}\n"
-               "Version: {}.{}.{}",
-               app_config.title,
-               app_config.version.major,
-               app_config.version.minor,
-               app_config.version.patch);
+    Application app{app_config_from_json()};
+    app.run();
 
     return EXIT_SUCCESS;
 } catch (const std::exception &ex) {
