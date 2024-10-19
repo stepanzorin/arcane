@@ -3,6 +3,7 @@ add_subdirectory(util)
 target_sources(
     arcane
     PRIVATE # cmake-format: sort
+            app_config.cpp
             app_config.hpp
             application.cpp
             application.hpp

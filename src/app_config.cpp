@@ -62,7 +62,7 @@ inline constexpr auto g_config_path = SM_ARCANE_APP_CONFIG_PATH;
 
 } // namespace
 
-[[nodiscard]] app_config_s app_config_from_json() {
+app_config_s app_config_from_json() {
     auto file = std::ifstream{g_config_path};
 
     if (!file.is_open()) {
