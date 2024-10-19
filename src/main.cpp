@@ -1,11 +1,14 @@
+#include <stdexcept>
+
 #include <fmt/printf.h>
+#include <spdlog/spdlog.h>
 
 #include "app_config.hpp"
 
-int main() {
-    using namespace sm::arcane;
+using namespace sm::arcane;
 
-    constexpr app_config_s app_config;
+int main() try {
+    const auto app_config = app_config_from_json();
     fmt::print("Project: {}\n"
                "Version: {}.{}.{}",
                app_config.title,
@@ -13,5 +16,11 @@ int main() {
                app_config.version.minor,
                app_config.version.patch);
 
-    return 0;
+    return EXIT_SUCCESS;
+} catch (const std::exception &ex) {
+    spdlog::critical("The application crashed due to an unhandled exception. Reason: {}", ex.what());
+    return EXIT_FAILURE;
+} catch (...) {
+    spdlog::critical("The application crashed due to an unhandled exception. Reason: <unknown exception>");
+    return EXIT_FAILURE;
 }

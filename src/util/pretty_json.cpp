@@ -10,7 +10,7 @@ namespace sm::arcane::util {
 
 namespace json = boost::json;
 
-void write_pretty_json(std::fstream &to_file, json::value const &from_desc, std::string *indent_ptr) {
+void write_pretty_json(std::fstream &to_file, const json::value &from_desc, std::string *indent_ptr) {
     auto indent = std::string{};
     if (!indent_ptr) {
         indent_ptr = &indent;
