@@ -4,7 +4,8 @@ target_sources(
     arcane
     PRIVATE # cmake-format: sort
             app_config.hpp
-            main.cpp)
+            application.cpp
+            application.hpp
             main.cpp
             window_config.cpp
             window_config.hpp)
