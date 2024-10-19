@@ -5,9 +5,7 @@ project(
     VERSION 1.0.1
     LANGUAGES CXX C)
 
-if (NOT DEFINED CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 23)
-endif ()
+set(CMAKE_CXX_STANDARD 23)
 
 add_executable(arcane src/main.cpp)
 
