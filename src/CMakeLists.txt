@@ -1,3 +1,5 @@
+add_subdirectory(util)
+
 target_sources(
     arcane
     PRIVATE # cmake-format: sort
