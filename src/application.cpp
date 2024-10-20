@@ -1,22 +1,19 @@
 #include "application.hpp"
 
-#include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
 namespace sm::arcane {
 
-void Application::run() {
-    fmt::print("Project: {}\n"
-               "Version: {}.{}.{}\n",
-               m_app_config.title,
-               m_app_config.version.major,
-               m_app_config.version.minor,
-               m_app_config.version.patch);
+Application::Application(const app_config_s &config)
+    : m_logger{spdlog::default_logger()->clone("app")}, //
+      m_window{config} {}
 
-    spdlog::info("Showing Windows window");
+void Application::run() {
     while (!m_window.should_close()) {
         m_window.pool_events();
     }
 }
+
+Application::~Application() = default;
 
 } // namespace sm::arcane

@@ -3,7 +3,9 @@
 
 #pragma once
 
-#include <utility>
+#include <memory>
+
+#include <spdlog/spdlog.h>
 
 #include "app_config.hpp"
 #include "window.hpp"
@@ -13,7 +15,7 @@ namespace sm::arcane {
 class Application {
 public:
     explicit Application() = delete;
-    explicit Application(app_config_s config) : m_app_config{std::move(config)}, m_window{m_app_config} {}
+    explicit Application(const app_config_s &config);
     Application(const Application &) = delete;
     Application &operator=(const Application &) = delete;
     Application(Application &&) noexcept = delete;
@@ -21,11 +23,10 @@ public:
 
     void run();
 
-    ~Application() = default;
+    ~Application();
 
 private:
-    app_config_s m_app_config;
-
+    std::shared_ptr<spdlog::logger> m_logger;
     Window m_window;
 };
 
