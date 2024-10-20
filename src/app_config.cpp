@@ -63,7 +63,6 @@ inline constexpr auto g_config_path = SM_ARCANE_APP_CONFIG_PATH;
 [[nodiscard]] detail::version_levels_s version_from_json(const json::value &desc) {
     const auto version_levels = collect_levels(desc.as_array());
     detail::validate_version(version_levels);
-
     return version_levels;
 }
 [[nodiscard]] json::value version_to_json(const detail::version_levels_s version) {
@@ -74,7 +73,7 @@ inline constexpr auto g_config_path = SM_ARCANE_APP_CONFIG_PATH;
 
 app_config_s app_config_from_json() {
     const auto &json_desc = parse_app_config();
-    const auto &app_desc = json_desc.at("app").as_object();
+    const auto &app_desc = json_desc.at("app");
     return {.title = title_from_json(app_desc.at("title")),
             .version = version_from_json(app_desc.at("version")),
             .window_config = window_config_from_json(app_desc.at("window")),
