@@ -10,6 +10,7 @@
 #include <boost/describe/enum.hpp>
 #include <boost/json/fwd.hpp>
 
+#include "vulkan_config.hpp"
 #include "window_config.hpp"
 
 namespace sm::arcane {
@@ -32,8 +33,9 @@ struct app_config_s {
     std::string title = SM_ARCANE_PROJECT_NAME;
     detail::version_levels_s version;
     window_config_s window_config;
+    vulkan_config_s vulkan_config;
 
-    BOOST_DESCRIBE_STRUCT(app_config_s, (), (title, version, window_config))
+    BOOST_DESCRIBE_STRUCT(app_config_s, (), (title, version, window_config, window_config))
 };
 
 [[nodiscard]] app_config_s app_config_from_json();

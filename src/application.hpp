@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <spdlog/spdlog.h>
+#include <vulkan/vulkan.hpp>
 
 #include "app_config.hpp"
 #include "window.hpp"
@@ -27,6 +28,7 @@ public:
 
 private:
     std::shared_ptr<spdlog::logger> m_logger;
+
     Window m_window;
 };
 

@@ -76,7 +76,8 @@ app_config_s app_config_from_json() {
     const auto &app_desc = json_desc.at("app").as_object();
     return {.title = title_from_json(app_desc.at("title")),
             .version = version_from_json(app_desc.at("version")),
-            .window_config = window_config_from_json(app_desc.at("window"))};
+            .window_config = window_config_from_json(app_desc.at("window")),
+            .vulkan_config = vulkan_config_from_json(app_desc.at("vulkan"))};
 }
 void app_config_to_json(const app_config_s &config) {
     auto file = std::fstream{g_config_path};
@@ -87,7 +88,8 @@ void app_config_to_json(const app_config_s &config) {
     const auto json_value = json::value{{"app",
                                          {{"title", title_to_json(config.title)},
                                           {"version", version_to_json(config.version)},
-                                          {"window", window_config_to_json(config.window_config)}}}};
+                                          {"window", window_config_to_json(config.window_config)},
+                                          {"vulkan", vulkan_config_to_json(config.vulkan_config)}}}};
 
     util::write_pretty_json(file, json_value);
 }
