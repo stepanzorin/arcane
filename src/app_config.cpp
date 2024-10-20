@@ -80,7 +80,7 @@ app_config_s app_config_from_json() {
             .vulkan_config = vulkan_config_from_json(app_desc.at("vulkan"))};
 }
 void app_config_to_json(const app_config_s &config) {
-    auto file = std::fstream{g_config_path};
+    auto file = std::ofstream{g_config_path};
     if (!file.is_open()) {
         throw std::runtime_error{"Failed to open the app config file for the writing"};
     }

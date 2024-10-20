@@ -10,6 +10,6 @@
 
 namespace sm::arcane::util {
 
-void write_pretty_json(std::fstream &to_file, const boost::json::value &from_desc, std::string *indent_ptr = nullptr);
+void write_pretty_json(std::ofstream &to_file, const boost::json::value &from_desc, std::string *indent_ptr = nullptr);
 
 } // namespace sm::arcane::util
