@@ -93,21 +93,16 @@ public:
         if (!glfwInit()) {
             throw std::runtime_error{"Failed to initialize GLFW"};
         }
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
         glfwSetErrorCallback([](const std::int32_t error, const char *description) {
             throw std::runtime_error{fmt::format("GLFWInitializer: Error #{}: {}", error, description)};
         });
 
-        set_default_windowed_window_hints();
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     }
 
     ~GLFWInitializer() { glfwTerminate(); }
-
-private:
-    static void set_default_windowed_window_hints() {
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
-    }
 };
 
 } // namespace
