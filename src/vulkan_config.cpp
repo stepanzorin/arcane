@@ -14,7 +14,6 @@ namespace {
     return {.validation_layers = json::value_to<std::vector<std::string>>(layers_desc.at("validation_layers")),
             .monitor_layers = json::value_to<std::vector<std::string>>(layers_desc.at("monitor_layers"))};
 }
-
 [[nodiscard]] json::value vulkan_layers_to_json(const vulkan_layers_s &layers) {
     auto validation_layers = json::array(layers.validation_layers.begin(), layers.validation_layers.end());
     auto monitor_layers = json::array(layers.monitor_layers.begin(), layers.monitor_layers.end());
@@ -26,7 +25,6 @@ namespace {
             .max_anisotropy = json::value_to<float>(device_desc.at("max_anisotropy")),
             .extensions = json::value_to<std::vector<std::string>>(device_desc.at("extensions"))};
 }
-
 [[nodiscard]] json::value device_config_to_json(const device_config_s &device) {
     auto extensions = json::array(device.extensions.begin(), device.extensions.end());
     return {{"enable_anisotropy", device.enable_anisotropy},

@@ -39,6 +39,18 @@ namespace json = boost::json;
 
 namespace {
 
+inline constexpr auto g_config_path = SM_ARCANE_APP_CONFIG_PATH;
+
+[[nodiscard]] json::value parse_app_config() {
+    auto file = std::ifstream{g_config_path};
+    if (!file.is_open()) {
+        throw std::runtime_error{"Filed to open the app config file for the reading"};
+    }
+
+    const auto json_content = std::string{(std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>()};
+    return json::parse(json_content);
+}
+
 [[nodiscard]] std::string title_from_json(const json::value &desc) noexcept { return desc.as_string().c_str(); }
 [[nodiscard]] json::value title_to_json(const std::string_view title) { return title.data(); }
 
@@ -58,20 +70,10 @@ namespace {
     return {version.major, version.minor, version.patch};
 }
 
-inline constexpr auto g_config_path = SM_ARCANE_APP_CONFIG_PATH;
-
 } // namespace
 
 app_config_s app_config_from_json() {
-    auto file = std::ifstream{g_config_path};
-
-    if (!file.is_open()) {
-        throw std::runtime_error{"Filed to open the app config file for the reading"};
-    }
-
-    const auto json_content = std::string{(std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>()};
-    const auto json_value = json::parse(json_content);
-    const auto &json_desc = json_value.as_object();
+    const auto &json_desc = parse_app_config();
 
     const auto &app_desc = json_desc.at("app").as_object();
     return {.title = title_from_json(app_desc.at("title")),
