@@ -9,4 +9,7 @@ target_sources(
             application.hpp
             main.cpp
             window_config.cpp
-            window_config.hpp)
+            window_config.hpp
+            window_glfw.cpp
+            window.cpp
+            window.hpp)
