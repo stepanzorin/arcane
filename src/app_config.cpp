@@ -74,7 +74,6 @@ inline constexpr auto g_config_path = SM_ARCANE_APP_CONFIG_PATH;
 
 app_config_s app_config_from_json() {
     const auto &json_desc = parse_app_config();
-
     const auto &app_desc = json_desc.at("app").as_object();
     return {.title = title_from_json(app_desc.at("title")),
             .version = version_from_json(app_desc.at("version")),
