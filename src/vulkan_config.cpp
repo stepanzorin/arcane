@@ -1,5 +1,8 @@
 #include "vulkan_config.hpp"
 
+#include <string>
+#include <utility>
+
 #include <boost/json.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
@@ -58,19 +61,18 @@ namespace detail {
 
 } // namespace
 
-[[nodiscard]] device_config_s device_config_from_json(const json::value &device_desc) {
-    auto extensions = json::value_to<std::vector<std::string>>(device_desc.at("extensions"));
-    return {.enable_anisotropy = json::value_to<bool>(device_desc.at("enable_anisotropy")),
-            .max_anisotropy = json::value_to<float>(device_desc.at("max_anisotropy")),
-            .extensions = detail::vector_string_to_vector_const_char(extensions)};
+[[nodiscard]] vulkan_config_s vulkan_config_from_json(const json::value &desc) {
+    const auto extensions = json::value_to<std::vector<std::string>>(desc.at("extensions"));
+    return {.layers = vulkan_layers_from_json(desc.at("layers")),
+            .extensions = detail::vector_string_to_vector_const_char(extensions),
+            .device = device_config_from_json(desc.at("device"))};
 }
-[[nodiscard]] json::value device_config_to_json(const device_config_s &device) {
-    auto extensions = json::array(detail::vector_const_char_to_vector_string(device.extensions).begin(),
-                                  detail::vector_const_char_to_vector_string(device.extensions).end());
-    return {{"enable_anisotropy", device.enable_anisotropy},
-            {"max_anisotropy", device.max_anisotropy},
-            {"extensions", std::move(extensions)}};
+[[nodiscard]] json::value vulkan_config_to_json(const vulkan_config_s &config) {
+    auto extensions = json::array(detail::vector_const_char_to_vector_string(config.extensions).begin(),
+                                  detail::vector_const_char_to_vector_string(config.extensions).end());
+    return {{"layers", vulkan_layers_to_json(config.layers)},
+            {"extensions", std::move(extensions)},
+            {"device", device_config_to_json(config.device)}};
 }
-
 
 } // namespace sm::arcane
