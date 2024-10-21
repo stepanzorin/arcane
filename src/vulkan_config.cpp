@@ -11,13 +11,13 @@ namespace json = boost::json;
 namespace {
 
 [[nodiscard]] vulkan_layers_s vulkan_layers_from_json(const json::value &layers_desc) {
-    return {.validation_layers = json::value_to<std::vector<std::string>>(layers_desc.at("validation_layers")),
-            .monitor_layers = json::value_to<std::vector<std::string>>(layers_desc.at("monitor_layers"))};
+    return {.monitor_layers = json::value_to<std::vector<std::string>>(layers_desc.at("monitor_layers")),
+            .validation_layers = json::value_to<std::vector<std::string>>(layers_desc.at("validation_layers"))};
 }
 [[nodiscard]] json::value vulkan_layers_to_json(const vulkan_layers_s &layers) {
-    auto validation_layers = json::array(layers.validation_layers.begin(), layers.validation_layers.end());
     auto monitor_layers = json::array(layers.monitor_layers.begin(), layers.monitor_layers.end());
-    return {{"validation_layers", std::move(validation_layers)}, {"monitor_layers", std::move(monitor_layers)}};
+    auto validation_layers = json::array(layers.validation_layers.begin(), layers.validation_layers.end());
+    return {{"monitor_layers", std::move(monitor_layers)}, {"validation_layers", std::move(validation_layers)}};
 }
 
 [[nodiscard]] device_config_s device_config_from_json(const json::value &device_desc) {

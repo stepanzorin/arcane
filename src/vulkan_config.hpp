@@ -23,10 +23,10 @@ TODO: In the future, when possible, `std::vector<std::string>` should be replace
 */
 
 struct vulkan_layers_s {
-    std::vector<std::string> validation_layers;
     std::vector<std::string> monitor_layers;
+    std::vector<std::string> validation_layers;
 
-    BOOST_DESCRIBE_STRUCT(vulkan_layers_s, (), (validation_layers, monitor_layers))
+    BOOST_DESCRIBE_STRUCT(vulkan_layers_s, (), (monitor_layers, validation_layers))
 };
 
 struct device_config_s {
