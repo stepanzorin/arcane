@@ -117,9 +117,17 @@ public:
         glfwSetWindowUserPointer(m_window_ptr, this);
     }
 
+    [[nodiscard]] required_instance_extensions_s get_required_instance_extensions() const noexcept {
+        auto glfw_extensions_count = 0u;
+        auto **glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extensions_count);
+        return {.count = glfw_extensions_count, .extensions = glfw_extensions};
+    }
+
     [[nodiscard]] bool should_close() const noexcept { return glfwWindowShouldClose(m_window_ptr); }
 
-    static void pool_events() noexcept { return glfwPollEvents(); }
+    [[nodiscard]] std::string_view title() const noexcept { return m_title; }
+
+    void pool_events() noexcept { return glfwPollEvents(); }
 
     ~Impl() { glfwDestroyWindow(m_window_ptr); }
 
@@ -133,7 +141,13 @@ private:
 
 Window::Window(const app_config_s &config) : m_pimpl(std::make_unique<Impl>(config)) {}
 
+required_instance_extensions_s Window::get_required_instance_extensions() const noexcept {
+    return m_pimpl->get_required_instance_extensions();
+}
+
 bool Window::should_close() const noexcept { return m_pimpl->should_close(); }
+
+std::string_view Window::title() const noexcept { return m_pimpl->title(); }
 
 void Window::pool_events() const noexcept { m_pimpl->pool_events(); }
 

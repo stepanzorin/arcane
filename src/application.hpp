@@ -23,6 +23,7 @@ public:
     Application &operator=(Application &&) noexcept = delete;
 
     void run();
+    [[nodiscard]] vk::UniqueInstance create_vulkan_instance(const app_config_s &config) const;
 
     ~Application();
 
@@ -30,6 +31,8 @@ private:
     std::shared_ptr<spdlog::logger> m_logger;
 
     Window m_window;
+
+    vk::UniqueInstance m_instance;
 };
 
 } // namespace sm::arcane

@@ -4,10 +4,17 @@
 #pragma once
 
 #include <memory>
+#include <cstdint>
+#include <string_view>
 
 #include "app_config.hpp"
 
 namespace sm::arcane {
+
+struct required_instance_extensions_s {
+    std::uint32_t count;
+    const char** extensions;
+};
 
 class Window {
 public:
@@ -19,6 +26,8 @@ public:
     Window(Window &&) noexcept = delete;
     Window &operator=(Window &&) noexcept = delete;
 
+    [[nodiscard]] required_instance_extensions_s get_required_instance_extensions() const noexcept;
+    [[nodiscard]] std::string_view title() const noexcept;
     [[nodiscard]] bool should_close() const noexcept;
     void pool_events() const noexcept;
 
