@@ -11,7 +11,7 @@
 #include <boost/describe/enum.hpp>
 #include <boost/json/fwd.hpp>
 
-#include "vulkan_config.hpp"
+#include "vulkan/config.hpp"
 #include "window_config.hpp"
 
 namespace sm::arcane {

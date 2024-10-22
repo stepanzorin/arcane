@@ -1,4 +1,4 @@
-#include "vulkan_config.hpp"
+#include "config.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/value.hpp>
@@ -45,6 +45,5 @@ namespace {
             {"extensions", std::move(extensions)},
             {"device", device_config_to_json(config.device)}};
 }
-
 
 } // namespace sm::arcane

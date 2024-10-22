@@ -1,4 +1,5 @@
 add_subdirectory(util)
+add_subdirectory(vulkan)
 
 target_sources(
     arcane
@@ -9,8 +10,6 @@ target_sources(
             application.hpp
             main.cpp
             os.h
-            vulkan_config.cpp
-            vulkan_config.hpp
             window.cpp
             window.hpp
             window_config.cpp
