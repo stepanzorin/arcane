@@ -1,13 +1,13 @@
 #include "application.hpp"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include <fmt/format.h>
 #include <range/v3/to_container.hpp>
 #include <range/v3/view/transform.hpp>
-#include <spdlog/spdlog.h>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
 namespace sm::arcane {
 
@@ -30,8 +30,13 @@ vk::UniqueInstance Application::create_vulkan_instance(const app_config_s &confi
                                    ranges::to<std::vector<const char *>>;
 
 #ifndef NDEBUG
-    const auto validation_layers_list{fmt::format("Validation layers: \n\t{}", fmt::join(validation_layers, "\n\t"))};
-    m_logger->debug("{}\n", validation_layers_list);
+    const auto validation_layers_list = fmt::format(
+            "Vulkan validation layers:{}",
+            fmt::join(validation_layers | ranges::views::transform([](const std::string &layer) {
+                          return fmt::format("\n\t{}", layer);
+                      }),
+                      ""));
+    m_logger->info("{}\n", validation_layers_list);
 #endif
 
     auto monitor_layers = layers.monitor_layers |
@@ -45,7 +50,11 @@ vk::UniqueInstance Application::create_vulkan_instance(const app_config_s &confi
     monitor_layers.insert(monitor_layers.end(), validation_layers.begin(), validation_layers.end());
 #endif
 
-    const auto monitor_layers_list{fmt::format("Vulkan monitor layers: \n\t{}", fmt::join(monitor_layers, "\n\t"))};
+    const auto monitor_layers_list = fmt::format(
+            "Vulkan monitor layers:{}",
+            fmt::join(monitor_layers | ranges::views::transform(
+                                               [](const std::string &layer) { return fmt::format("\n\t{}", layer); }),
+                      ""));
     m_logger->info("{}\n", monitor_layers_list);
 
     auto [extension_count, extensions] = m_window.required_instance_extensions();
