@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <string>
 
 #include <boost/describe/class.hpp>
@@ -30,7 +31,7 @@ struct version_levels_s {
 } // namespace detail
 
 struct app_config_s {
-    std::wstring_view config_path; // is populated once when the application starts
+    std::filesystem::path config_path; // is populated once when the application starts
 
     std::string title = SM_ARCANE_PROJECT_NAME;
     detail::version_levels_s version;

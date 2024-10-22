@@ -9,11 +9,13 @@
 #include <glfw/glfw3.h>
 #include <spdlog/spdlog.h>
 
+#include "window.hpp"
+
 namespace sm::arcane {
 
 namespace {
 
-#if WIN32
+#if SM_ARCANE_OPERATING_SYSTEM_WINDOWS
 inline constexpr auto g_window_title_bar_y_offset = 31;
 #endif
 
@@ -44,7 +46,7 @@ template<typename GLFWFn, typename... FnArgs>
                                             nullptr,
                                             nullptr);
 
-#if WIN32
+#if SM_ARCANE_OPERATING_SYSTEM_WINDOWS
     glfwSetWindowPos(window_ptr, config.position.x, config.position.y + g_window_title_bar_y_offset);
 #else
     glfwSetWindowPos(window_ptr, config.position.x, config.position.y);

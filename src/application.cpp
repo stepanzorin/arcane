@@ -9,6 +9,8 @@
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
+#include "os.h"
+
 namespace sm::arcane {
 
 Application::Application(const app_config_s &config)
@@ -29,7 +31,7 @@ vk::UniqueInstance Application::create_vulkan_instance(const app_config_s &confi
                                    ranges::views::transform([](const std::string &str) { return str.c_str(); }) |
                                    ranges::to<std::vector<const char *>>;
 
-#ifndef NDEBUG
+#ifdef SM_ARCANE_DEBUG_MODE
     const auto validation_layers_list = fmt::format(
             "Vulkan validation layers:{}",
             fmt::join(validation_layers | ranges::views::transform([](const std::string &layer) {
@@ -43,7 +45,7 @@ vk::UniqueInstance Application::create_vulkan_instance(const app_config_s &confi
                           ranges::views::transform([](const std::string &str) { return str.c_str(); }) |
                           ranges::to<std::vector<const char *>>;
 
-#ifndef NDEBUG
+#ifdef SM_ARCANE_DEBUG_MODE
     if (!true /* check_validation_layers_support() */) {
         throw std::runtime_error{"Requested validation layer is not available"};
     }

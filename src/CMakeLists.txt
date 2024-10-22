@@ -8,6 +8,7 @@ target_sources(
             application.cpp
             application.hpp
             main.cpp
+            os.h
             vulkan_config.cpp
             vulkan_config.hpp
             window.cpp

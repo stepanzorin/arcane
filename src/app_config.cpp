@@ -74,14 +74,14 @@ app_config_s app_config_from_json(const std::string_view config_name) {
     const auto config_path = util::application_directory_path() / config_name;
     const auto &json_desc = parse_app_config(config_path);
     const auto &app_desc = json_desc.at("app");
-    return {.config_path = config_path.c_str(),
+    return {.config_path = config_path,
             .title = title_from_json(app_desc.at("title")),
             .version = version_from_json(app_desc.at("version")),
             .window_config = window_config_from_json(app_desc.at("window")),
             .vulkan_config = vulkan_config_from_json(app_desc.at("vulkan"))};
 }
 void app_config_to_json(const app_config_s &config) {
-    auto file = std::ofstream{config.config_path.data()};
+    auto file = std::ofstream{config.config_path};
     if (!file.is_open()) {
         throw std::runtime_error{"Failed to open the app config file for the writing"};
     }
