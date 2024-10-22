@@ -3,6 +3,7 @@
 
 #include <boost/system/system_error.hpp>
 #include <spdlog/spdlog.h>
+#include <spdlog/logger.h>
 
 #include "app_config.hpp"
 #include "application.hpp"

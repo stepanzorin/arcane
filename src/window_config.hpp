@@ -11,10 +11,10 @@
 
 namespace sm::arcane {
 
-enum class window_mode_e { //
+enum class window_mode_e {
     windowed,
     maximized,
-    fullscreen
+    fullscreen,
 };
 BOOST_DESCRIBE_ENUM(window_mode_e, windowed, maximized, fullscreen)
 
