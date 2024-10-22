@@ -30,6 +30,8 @@ struct version_levels_s {
 } // namespace detail
 
 struct app_config_s {
+    std::wstring_view config_path; // is populated once when the application starts
+
     std::string title = SM_ARCANE_PROJECT_NAME;
     detail::version_levels_s version;
     window_config_s window_config;
@@ -38,7 +40,7 @@ struct app_config_s {
     BOOST_DESCRIBE_STRUCT(app_config_s, (), (title, version, window_config, window_config))
 };
 
-[[nodiscard]] app_config_s app_config_from_json();
+[[nodiscard]] app_config_s app_config_from_json(std::string_view config_name);
 void app_config_to_json(const app_config_s & /* config */);
 
 } // namespace sm::arcane

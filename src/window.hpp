@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <memory>
 #include <cstdint>
+#include <memory>
 #include <string_view>
 
 #include "app_config.hpp"
@@ -13,7 +13,7 @@ namespace sm::arcane {
 
 struct required_instance_extensions_s {
     std::uint32_t count;
-    const char** extensions;
+    const char **extensions;
 };
 
 class Window {

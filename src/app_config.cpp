@@ -10,6 +10,7 @@
 #include <boost/json/value_to.hpp>
 #include <fmt/format.h>
 
+#include "util/filesystem_helpers.hpp"
 #include "util/pretty_json.hpp"
 
 namespace sm::arcane {
@@ -39,10 +40,8 @@ namespace json = boost::json;
 
 namespace {
 
-inline constexpr auto g_config_path = SM_ARCANE_APP_CONFIG_PATH;
-
-[[nodiscard]] json::value parse_app_config() {
-    auto file = std::ifstream{g_config_path};
+[[nodiscard]] json::value parse_app_config(const std::filesystem::path &config_path) {
+    auto file = std::ifstream{config_path};
     if (!file.is_open()) {
         throw std::runtime_error{"Filed to open the app config file for the reading"};
     }
@@ -71,16 +70,18 @@ inline constexpr auto g_config_path = SM_ARCANE_APP_CONFIG_PATH;
 
 } // namespace
 
-app_config_s app_config_from_json() {
-    const auto &json_desc = parse_app_config();
+app_config_s app_config_from_json(const std::string_view config_name) {
+    const auto config_path = util::application_directory_path() / config_name;
+    const auto &json_desc = parse_app_config(config_path);
     const auto &app_desc = json_desc.at("app");
-    return {.title = title_from_json(app_desc.at("title")),
+    return {.config_path = config_path.c_str(),
+            .title = title_from_json(app_desc.at("title")),
             .version = version_from_json(app_desc.at("version")),
             .window_config = window_config_from_json(app_desc.at("window")),
             .vulkan_config = vulkan_config_from_json(app_desc.at("vulkan"))};
 }
 void app_config_to_json(const app_config_s &config) {
-    auto file = std::ofstream{g_config_path};
+    auto file = std::ofstream{config.config_path.data()};
     if (!file.is_open()) {
         throw std::runtime_error{"Failed to open the app config file for the writing"};
     }

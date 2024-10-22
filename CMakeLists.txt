@@ -16,7 +16,7 @@ target_compile_definitions(
             SM_ARCANE_PROJECT_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
             SM_ARCANE_PROJECT_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH})
 
-target_compile_definitions(arcane PRIVATE SM_ARCANE_APP_CONFIG_PATH="${CMAKE_SOURCE_DIR}/config.json")
+target_compile_definitions(arcane PRIVATE SM_ARCANE_APPLICATION_DIR_PATH="${PROJECT_SOURCE_DIR}")
 
 set(GLSLC_EXECUTABLE $ENV{VK_SDK_PATH}/Bin/glslc.exe)
 
