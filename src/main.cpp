@@ -7,6 +7,7 @@
 
 #include "app_config.hpp"
 #include "application.hpp"
+#include "util/filesystem_helpers.hpp"
 
 namespace sm::arcane {
 
@@ -14,7 +15,10 @@ void run(const std::string_view config_name, const std::shared_ptr<spdlog::logge
     global_logger->info("arcane is running");
 
     try {
-        const auto config = app_config_from_json(config_name);
+        const auto config_path = util::application_directory_path() / config_name;
+        global_logger->info("Configuration path: {}", config_path.string());
+        const auto config = app_config_from_json(config_path);
+
         Application app{config};
         app.run();
     } catch (const boost::system::system_error &ex) {

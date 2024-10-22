@@ -70,8 +70,7 @@ namespace {
 
 } // namespace
 
-app_config_s app_config_from_json(const std::string_view config_name) {
-    const auto config_path = util::application_directory_path() / config_name;
+app_config_s app_config_from_json(const std::filesystem::path &config_path) {
     const auto &json_desc = parse_app_config(config_path);
     const auto &app_desc = json_desc.at("app");
     return {.config_path = config_path,
@@ -80,17 +79,17 @@ app_config_s app_config_from_json(const std::string_view config_name) {
             .window_config = window_config_from_json(app_desc.at("window")),
             .vulkan_config = vulkan_config_from_json(app_desc.at("vulkan"))};
 }
-void app_config_to_json(const app_config_s &config) {
-    auto file = std::ofstream{config.config_path};
+void app_config_to_json(const app_config_s &updated_config) {
+    auto file = std::ofstream{updated_config.config_path};
     if (!file.is_open()) {
         throw std::runtime_error{"Failed to open the app config file for the writing"};
     }
 
     const auto json_value = json::value{{"app",
-                                         {{"title", title_to_json(config.title)},
-                                          {"version", version_to_json(config.version)},
-                                          {"window", window_config_to_json(config.window_config)},
-                                          {"vulkan", vulkan_config_to_json(config.vulkan_config)}}}};
+                                         {{"title", title_to_json(updated_config.title)},
+                                          {"version", version_to_json(updated_config.version)},
+                                          {"window", window_config_to_json(updated_config.window_config)},
+                                          {"vulkan", vulkan_config_to_json(updated_config.vulkan_config)}}}};
 
     util::write_pretty_json(file, json_value);
 }

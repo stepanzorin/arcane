@@ -41,7 +41,7 @@ struct app_config_s {
     BOOST_DESCRIBE_STRUCT(app_config_s, (), (title, version, window_config, window_config))
 };
 
-[[nodiscard]] app_config_s app_config_from_json(std::string_view config_name);
-void app_config_to_json(const app_config_s & /* config */);
+[[nodiscard]] app_config_s app_config_from_json(const std::filesystem::path & /* config_path */);
+void app_config_to_json(const app_config_s & /* updated_config */);
 
 } // namespace sm::arcane
