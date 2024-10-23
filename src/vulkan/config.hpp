@@ -9,7 +9,7 @@
 #include <boost/describe/class.hpp>
 #include <boost/json/fwd.hpp>
 
-namespace sm::arcane {
+namespace sm::arcane::vulkan {
 
 // Note
 /*
@@ -22,30 +22,21 @@ TODO: In the future, when possible, `std::vector<std::string>` should be replace
 
 */
 
-struct vulkan_layers_s {
-    std::vector<std::string> monitor_layers;
-    std::vector<std::string> validation_layers;
-
-    BOOST_DESCRIBE_STRUCT(vulkan_layers_s, (), (monitor_layers, validation_layers))
-};
-
 struct device_config_s {
     bool enable_anisotropy;
     float max_anisotropy;
-    std::vector<std::string> extensions;
 
-    BOOST_DESCRIBE_STRUCT(device_config_s, (), (enable_anisotropy, max_anisotropy, extensions))
+    BOOST_DESCRIBE_STRUCT(device_config_s, (), (enable_anisotropy, max_anisotropy))
 };
 
-struct vulkan_config_s {
-    vulkan_layers_s layers;
-    std::vector<std::string> extensions;
+struct config_s {
+    bool enable_validation_layers;
     device_config_s device;
 
-    BOOST_DESCRIBE_STRUCT(vulkan_config_s, (), (layers, extensions, device))
+    BOOST_DESCRIBE_STRUCT(config_s, (), (enable_validation_layers, device))
 };
 
-[[nodiscard]] vulkan_config_s vulkan_config_from_json(const boost::json::value & /* desc */);
-[[nodiscard]] boost::json::value vulkan_config_to_json(const vulkan_config_s & /* config */);
+[[nodiscard]] config_s config_from_json(const boost::json::value & /* desc */);
+[[nodiscard]] boost::json::value config_to_json(const config_s & /* config */);
 
-} // namespace sm::arcane
+} // namespace sm::arcane::vulkan

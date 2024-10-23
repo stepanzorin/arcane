@@ -36,7 +36,7 @@ struct app_config_s {
     std::string title = SM_ARCANE_PROJECT_NAME;
     detail::version_levels_s version;
     window_config_s window_config;
-    vulkan_config_s vulkan_config;
+    vulkan::config_s vulkan;
 
     BOOST_DESCRIBE_STRUCT(app_config_s, (), (title, version, window_config, window_config))
 };

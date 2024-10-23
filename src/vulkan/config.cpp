@@ -4,46 +4,29 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 
-namespace sm::arcane {
+namespace sm::arcane::vulkan {
 
 namespace json = boost::json;
 
 namespace {
 
-[[nodiscard]] vulkan_layers_s vulkan_layers_from_json(const json::value &layers_desc) {
-    return {.monitor_layers = json::value_to<std::vector<std::string>>(layers_desc.at("monitor_layers")),
-            .validation_layers = json::value_to<std::vector<std::string>>(layers_desc.at("validation_layers"))};
-}
-[[nodiscard]] json::value vulkan_layers_to_json(const vulkan_layers_s &layers) {
-    auto monitor_layers = json::array(layers.monitor_layers.begin(), layers.monitor_layers.end());
-    auto validation_layers = json::array(layers.validation_layers.begin(), layers.validation_layers.end());
-    return {{"monitor_layers", std::move(monitor_layers)}, {"validation_layers", std::move(validation_layers)}};
-}
-
 [[nodiscard]] device_config_s device_config_from_json(const json::value &device_desc) {
     return {.enable_anisotropy = json::value_to<bool>(device_desc.at("enable_anisotropy")),
-            .max_anisotropy = json::value_to<float>(device_desc.at("max_anisotropy")),
-            .extensions = json::value_to<std::vector<std::string>>(device_desc.at("extensions"))};
+            .max_anisotropy = json::value_to<float>(device_desc.at("max_anisotropy"))};
 }
 [[nodiscard]] json::value device_config_to_json(const device_config_s &device) {
-    auto extensions = json::array(device.extensions.begin(), device.extensions.end());
-    return {{"enable_anisotropy", device.enable_anisotropy},
-            {"max_anisotropy", device.max_anisotropy},
-            {"extensions", std::move(extensions)}};
+    return {{"enable_anisotropy", device.enable_anisotropy}, {"max_anisotropy", device.max_anisotropy}};
 }
 
 } // namespace
 
-[[nodiscard]] vulkan_config_s vulkan_config_from_json(const json::value &desc) {
-    return {.layers = vulkan_layers_from_json(desc.at("layers")),
-            .extensions = json::value_to<std::vector<std::string>>(desc.at("extensions")),
+[[nodiscard]] config_s config_from_json(const json::value &desc) {
+    return {.enable_validation_layers = json::value_to<bool>(desc.at("enable_validation_layers")),
             .device = device_config_from_json(desc.at("device"))};
 }
-[[nodiscard]] json::value vulkan_config_to_json(const vulkan_config_s &config) {
-    auto extensions = json::array(config.extensions.begin(), config.extensions.end());
-    return {{"layers", vulkan_layers_to_json(config.layers)},
-            {"extensions", std::move(extensions)},
+[[nodiscard]] json::value config_to_json(const config_s &config) {
+    return {{"enable_validation_layers", config.enable_validation_layers},
             {"device", device_config_to_json(config.device)}};
 }
 
-} // namespace sm::arcane
+} // namespace sm::arcane::vulkan
