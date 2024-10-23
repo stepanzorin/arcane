@@ -1,8 +1,8 @@
-// Arcane (https://github.com/stepanzorin/arcane)
-// Copyright Text: 2024 Stepan Zorin <stz.hom@gmail.com>
-
 #ifndef SM_ARCANE_OS_H
 #define SM_ARCANE_OS_H
+
+// Arcane (https://github.com/stepanzorin/arcane)
+// Copyright Text: 2024 Stepan Zorin <stz.hom@gmail.com>
 
 
 // ================================================================
@@ -121,4 +121,4 @@
     #define SM_ARCANE_RELEASE_MODE 1
 #endif
 
-#endif SM_ARCANE_OS_H
+#endif // SM_ARCANE_OS_H
