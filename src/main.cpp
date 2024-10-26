@@ -12,12 +12,11 @@
 namespace sm::arcane {
 
 void run(const std::string_view config_name, const std::shared_ptr<spdlog::logger> &global_logger) noexcept try {
-    global_logger->info("arcane is running");
-
     try {
         const auto config_path = util::application_directory_path() / config_name;
-        global_logger->info("Configuration path: {}", config_path.string());
+        global_logger->trace("Configuration path: {}", config_path.string());
         const auto config = app_config_from_json(config_path);
+        global_logger->trace("{} is running", config.title);
 
         Application app{config};
         app.run();
@@ -36,6 +35,7 @@ void run(const std::string_view config_name, const std::shared_ptr<spdlog::logge
 
 int main(const int argc, char *argv[]) noexcept {
     const auto global_logger = spdlog::default_logger()->clone("global");
+    global_logger->set_level(spdlog::level::trace);
 
     if (argc == 1) {
         global_logger->critical("It is necessary to pass only one input argument to the program, which is the name "

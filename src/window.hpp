@@ -7,6 +7,8 @@
 #include <memory>
 #include <string_view>
 
+#include <vulkan/vulkan.h>
+
 #include "app_config.hpp"
 
 namespace sm::arcane {
@@ -28,8 +30,11 @@ public:
 
     [[nodiscard]] required_instance_extensions_s required_instance_extensions() const noexcept;
     [[nodiscard]] std::string_view title() const noexcept;
+    [[nodiscard]] window_extent_s extent() const noexcept;
     [[nodiscard]] bool should_close() const noexcept;
     void pool_events() const noexcept;
+
+    [[nodiscard]] VkSurfaceKHR create_surface(const VkInstance &) const;
 
     ~Window();
 

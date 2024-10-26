@@ -6,14 +6,20 @@
 #include <memory>
 #include <vector>
 
-#include <spdlog/spdlog.h>
-#include <vulkan/vulkan.hpp>
+#include <spdlog/logger.h>
+#include <vulkan/vulkan_raii.hpp>
 
 #include "app_config.hpp"
+#include "vulkan/device.hpp"
+#include "vulkan/instance.hpp"
 #include "window.hpp"
 
 namespace sm::arcane {
 
+struct vulkan_layers_s {
+    std::vector<const char *> monitors;
+    std::vector<const char *> validations;
+};
 
 class Application {
 public:
@@ -26,27 +32,18 @@ public:
     Application &operator=(Application &&) noexcept = delete;
 
     void run();
-    [[nodiscard]] vk::UniqueInstance create_vulkan_instance(const app_config_s &config);
 
-    ~Application();
+    ~Application() = default;
 
 private:
-    void init_vulkan_layers_and_extensions(const app_config_s &config);
     std::shared_ptr<spdlog::logger> m_logger;
 
     Window m_window;
 
-    struct vulkan_layers_and_extensions_s {
-        struct vulkan_layers_s {
-            std::vector<const char *> monitors;
-            std::vector<const char *> validations;
-        };
-        vulkan_layers_s vulkan_layers;
-        std::vector<const char *> device_extensions;
-    };
-    vulkan_layers_and_extensions_s m_vulkan_layers_and_extensions;
+    vulkan::Instance m_instance;
 
-    vk::UniqueInstance m_instance;
+    vk::raii::SurfaceKHR m_surface;
+    vulkan::Device m_device;
 };
 
 } // namespace sm::arcane

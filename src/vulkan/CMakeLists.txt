@@ -5,5 +5,9 @@ target_sources(
             config.hpp
             debug_utils.cpp
             debug_utils.hpp
+            device.cpp
+            device.hpp
             instance.cpp
-            instance.hpp)
+            instance.hpp
+            swapchain.cpp
+            swapchain.hpp)

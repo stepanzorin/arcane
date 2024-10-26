@@ -16,6 +16,6 @@ debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_se
                                const VkDebugUtilsMessengerCallbackDataEXT *callback_data_ptr,
                                void * /* user_data_ptr */) noexcept;
 
-[[nodiscard]] vk::DebugUtilsMessengerCreateInfoEXT makeDebugUtilsMessengerCreateInfoEXT() noexcept;
+[[nodiscard]] vk::DebugUtilsMessengerCreateInfoEXT make_debug_utils_messenger_create_info_ext() noexcept;
 
 } // namespace sm::arcane::vulkan

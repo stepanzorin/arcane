@@ -5,7 +5,7 @@
 #include <string_view>
 #include <utility>
 
-#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
 #include <glfw/glfw3.h>
 #include <spdlog/spdlog.h>
 
@@ -129,7 +129,17 @@ public:
 
     [[nodiscard]] std::string_view title() const noexcept { return m_title; }
 
+    [[nodiscard]] window_extent_s extent() const noexcept { return m_config.extent; }
+
     void pool_events() noexcept { return glfwPollEvents(); }
+
+    [[nodiscard]] VkSurfaceKHR create_surface(const VkInstance &instance) const {
+        auto surface = VkSurfaceKHR{};
+        if (glfwCreateWindowSurface(instance, m_window_ptr, nullptr, &surface) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create window surface");
+        }
+        return surface;
+    }
 
     ~Impl() override { glfwDestroyWindow(m_window_ptr); }
 
@@ -151,7 +161,11 @@ bool Window::should_close() const noexcept { return m_pimpl->should_close(); }
 
 std::string_view Window::title() const noexcept { return m_pimpl->title(); }
 
+window_extent_s Window::extent() const noexcept { return m_pimpl->extent(); }
+
 void Window::pool_events() const noexcept { m_pimpl->pool_events(); }
+
+VkSurfaceKHR Window::create_surface(const VkInstance &instance) const { return m_pimpl->create_surface(instance); }
 
 Window::~Window() = default;
 
