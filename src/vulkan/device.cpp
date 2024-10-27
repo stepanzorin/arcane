@@ -1,6 +1,7 @@
 #include "device.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <limits>
 #include <ranges>
@@ -19,13 +20,13 @@ namespace {
 [[nodiscard]] std::uint32_t find_graphics_queue_family_index(
         const std::vector<vk::QueueFamilyProperties> &queue_family_properties) noexcept {
     // get the first index into `queue_family_properties` which supports graphics
-    const auto graphics_queue_family_property = std::find_if(
+    const auto property_it = std::find_if(
             queue_family_properties.begin(),
             queue_family_properties.end(),
             [](const vk::QueueFamilyProperties &qfp) { return qfp.queueFlags & vk::QueueFlagBits::eGraphics; });
-    assert(graphics_queue_family_property != queue_family_properties.end());
+    assert(property_it != queue_family_properties.end());
 
-    return static_cast<std::uint32_t>(std::distance(queue_family_properties.begin(), graphics_queue_family_property));
+    return static_cast<std::uint32_t>(std::distance(queue_family_properties.cbegin(), property_it));
 }
 
 [[nodiscard]] queue_family_indices_s find_graphics_and_present_queue_family_index(
@@ -57,16 +58,14 @@ namespace {
         }
     }
 
-    throw std::runtime_error("Could not find queues for both graphics or present -> terminating");
+    throw std::runtime_error{"Failed to find the queues for both graphics or present"};
 }
 
 [[nodiscard]] vk::raii::PhysicalDevice pick_physical_device(const vk::raii::Instance &instance) {
     const auto physical_devices = instance.enumeratePhysicalDevices();
     if (physical_devices.empty()) {
-        throw std::runtime_error("No Vulkan physical devices available.");
+        throw std::runtime_error{"No Vulkan physical devices available"};
     }
-
-    const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
 
     auto picked_device = physical_devices.front();
 
@@ -75,6 +74,8 @@ namespace {
     const auto major_version = (driver_version >> 22) & 0x3FF;
     const auto minor_version = (driver_version >> 14) & 0xFF;
     const auto patch_version = (driver_version >> 6) & 0xFF;
+
+    const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
     vulkan_logger->info("Picked physical device:"
                         "\n\tDevice Name: {}"
                         "\n\tDevice Type: {}"
@@ -93,8 +94,9 @@ namespace {
 }
 
 [[nodiscard]] vk::raii::Device create_logical_device(
-        const vk::raii::PhysicalDevice &physical_device,
-        const vk::PhysicalDeviceFeatures *physical_device_features_ptr = nullptr) {
+        // TODO: to support config for `(1) Note`. It is necessary to make a branch to select the necessary features
+        /*const config_s &config*/
+        const vk::raii::PhysicalDevice &physical_device) {
     static constexpr auto device_extensions = std::array{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
     const auto queue_family_index = find_graphics_queue_family_index(physical_device.getQueueFamilyProperties());
@@ -104,7 +106,9 @@ namespace {
                                                          device_queue_info,
                                                          {},
                                                          device_extensions,
-                                                         physical_device_features_ptr,
+                                                         // (1) Note: `device_features` rarely has a feature set.
+                                                         // Only for non-regular goals. For example, `Ray Tracing`
+                                                         nullptr,
                                                          nullptr};
 
     return {physical_device, device_create_info};
