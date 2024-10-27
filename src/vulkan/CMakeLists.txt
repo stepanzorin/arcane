@@ -3,8 +3,6 @@ target_sources(
     PRIVATE # cmake-format: sort
             config.cpp
             config.hpp
-            debug_utils.cpp
-            debug_utils.hpp
             device.cpp
             device.hpp
             instance.cpp
