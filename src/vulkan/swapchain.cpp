@@ -48,10 +48,10 @@ namespace {
                                                              vk::Format::eB8G8R8Unorm,
                                                              vk::Format::eR8G8B8Unorm};
 
-        constexpr auto requested_color_space = vk::ColorSpaceKHR::eSrgbNonlinear;
+        static constexpr auto requested_color_space = vk::ColorSpaceKHR::eSrgbNonlinear;
         for (const auto requested_format : requested_formats) {
             const auto it = ranges::find_if(formats, [&](const vk::SurfaceFormatKHR &f) {
-                return (f.format == requested_format) && (f.colorSpace == requested_color_space);
+                return f.format == requested_format && f.colorSpace == requested_color_space;
             });
 
             if (it != formats.cend()) {
@@ -66,9 +66,9 @@ namespace {
 }
 
 [[nodiscard]] vk::Format pick_depth_format(const vk::raii::PhysicalDevice &physical_device) {
-    constexpr auto candidates = std::array{vk::Format::eD32Sfloat,
-                                           vk::Format::eD32SfloatS8Uint,
-                                           vk::Format::eD24UnormS8Uint};
+    static constexpr auto candidates = std::array{vk::Format::eD32Sfloat,
+                                                  vk::Format::eD32SfloatS8Uint,
+                                                  vk::Format::eD24UnormS8Uint};
 
     for (const auto format : candidates) {
         const auto properties = physical_device.getFormatProperties(format);
