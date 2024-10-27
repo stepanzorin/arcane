@@ -24,7 +24,7 @@ void run(const std::string_view config_name, const std::shared_ptr<spdlog::logge
         global_logger->critical("The application crashed due to failure config parsing. Reason: {}", ex.what());
     }
 
-    global_logger->info("arcane successful finished");
+    global_logger->trace("arcane successful finished");
 } catch (const std::exception &ex) {
     global_logger->critical("The application crashed due to an unhandled exception. Reason: {}", ex.what());
 } catch (...) {
