@@ -12,6 +12,7 @@
 #include "app_config.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/instance.hpp"
+#include "vulkan/swapchain.hpp"
 #include "window.hpp"
 
 namespace sm::arcane {
@@ -33,6 +34,9 @@ public:
 
     void run();
 
+    [[nodiscard]] std::unique_ptr<vulkan::Swapchain> create_swapchain();
+    void recreate_swapchain();
+
     ~Application() = default;
 
 private:
@@ -44,6 +48,7 @@ private:
 
     vk::raii::SurfaceKHR m_surface;
     vulkan::Device m_device;
+    std::unique_ptr<vulkan::Swapchain> m_swapchain_uptr;
 };
 
 } // namespace sm::arcane

@@ -2,13 +2,75 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cstdint>
 #include <limits>
 #include <utility>
 
+#include <range/v3/algorithm/find_if.hpp>
+#include <spdlog/spdlog.h>
+
 namespace sm::arcane::vulkan {
 
-Swapchain::Swapchain(const Device &device, const Window &window, const vk::raii::SurfaceKHR &surface)
+namespace {
+
+[[nodiscard]] vk::PresentModeKHR pick_present_mode(const std::vector<vk::PresentModeKHR> &present_modes) noexcept {
+    auto picked_mode = vk::PresentModeKHR::eFifo; // The FIFO present mode is guaranteed by the spec to be supported
+
+    for (const auto &present_mode : present_modes) {
+        if (present_mode == vk::PresentModeKHR::eMailbox) {
+            picked_mode = present_mode;
+            break;
+        }
+
+        if (present_mode == vk::PresentModeKHR::eImmediate) {
+            picked_mode = present_mode;
+        }
+    }
+
+    return picked_mode;
+}
+
+[[nodiscard]] vk::SurfaceFormatKHR pick_surface_format(const std::vector<vk::SurfaceFormatKHR> &formats) noexcept {
+    assert(!formats.empty());
+
+    auto picked_format = formats.front();
+
+    if (formats.size() == 1) {
+        if (formats[0].format == vk::Format::eUndefined) {
+            picked_format.format = vk::Format::eB8G8R8A8Unorm;
+            picked_format.colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
+        }
+    } else {
+        // request several formats, the first found will be used
+        static constexpr auto requested_formats = std::array{vk::Format::eB8G8R8A8Unorm,
+                                                             vk::Format::eR8G8B8A8Unorm,
+                                                             vk::Format::eB8G8R8Unorm,
+                                                             vk::Format::eR8G8B8Unorm};
+
+        constexpr auto requested_color_space = vk::ColorSpaceKHR::eSrgbNonlinear;
+        for (const auto requested_format : requested_formats) {
+            const auto it = ranges::find_if(formats, [&](const vk::SurfaceFormatKHR &f) {
+                return (f.format == requested_format) && (f.colorSpace == requested_color_space);
+            });
+
+            if (it != formats.cend()) {
+                picked_format = *it;
+                break;
+            }
+        }
+    }
+
+    assert(picked_format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear);
+    return picked_format;
+}
+
+} // namespace
+
+Swapchain::Swapchain(Device &device,
+                     const Window &window,
+                     const vk::raii::SurfaceKHR &surface,
+                     Swapchain *old_swapchain_ptr /* = nullptr */)
     : m_device{device},
       m_window{window},
       m_surface{surface},
@@ -20,21 +82,21 @@ Swapchain::Swapchain(const Device &device, const Window &window, const vk::raii:
       m_command_buffer{std::move(vk::raii::CommandBuffers{
               device.device(),
               vk::CommandBufferAllocateInfo{m_command_pool, vk::CommandBufferLevel::ePrimary, 1}}
-                                         .front())} {
+                                         .front())},
+      m_old_swapchain_sptr{old_swapchain_ptr} {
     revalue();
 }
 
 void Swapchain::revalue() {
-    m_format = [this] -> vk::Format {
-        const auto formats = m_device.physical_device().getSurfaceFormatsKHR(m_surface);
-        assert(!formats.empty());
-        return formats[0].format == vk::Format::eUndefined ? vk::Format::eB8G8R8A8Unorm : formats[0].format;
-    }();
+    const auto &physical_device = m_device.physical_device();
 
-    const auto surface_capabilities = m_device.physical_device().getSurfaceCapabilitiesKHR(m_surface);
+    const auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(m_surface);
+
+    const auto surface_format = pick_surface_format(physical_device.getSurfaceFormatsKHR(*m_surface));
+    m_color_format = surface_format.format;
 
     m_extent = [&, this] -> vk::Extent2D {
-        if (surface_capabilities.currentExtent.width != (std::numeric_limits<uint32_t>::max)()) {
+        if (surface_capabilities.currentExtent.width != (std::numeric_limits<std::uint32_t>::max)()) {
             // If the surface size is defined, the swap chain size must match
             return surface_capabilities.currentExtent;
         }
@@ -48,8 +110,7 @@ void Swapchain::revalue() {
                            surface_capabilities.maxImageExtent.height)};
     }();
 
-    // The FIFO present mode is guaranteed by the spec to be supported
-    constexpr auto swapchain_present_mode = vk::PresentModeKHR::eFifo;
+    m_image_usages = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
 
     const auto queue_family_indices = std::array{m_device.queue_family_indices().graphics_index,
                                                  m_device.queue_family_indices().present_index};
@@ -58,11 +119,11 @@ void Swapchain::revalue() {
             vk::SwapchainCreateFlagsKHR{},
             m_surface,
             std::clamp(3u, surface_capabilities.minImageCount, surface_capabilities.maxImageCount),
-            m_format,
-            vk::ColorSpaceKHR::eSrgbNonlinear,
+            m_color_format,
+            surface_format.colorSpace,
             m_extent,
             1,
-            vk::ImageUsageFlagBits::eColorAttachment,
+            m_image_usages,
             m_device.queue_family_indices().are_different() ? vk::SharingMode::eConcurrent
                                                             : vk::SharingMode::eExclusive,
             m_device.queue_family_indices().are_different() ? static_cast<std::uint32_t>(queue_family_indices.size())
@@ -80,13 +141,27 @@ void Swapchain::revalue() {
                     : (surface_capabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit)
                             ? vk::CompositeAlphaFlagBitsKHR::eInherit
                             : vk::CompositeAlphaFlagBitsKHR::eOpaque},
-            swapchain_present_mode,
+            pick_present_mode(physical_device.getSurfacePresentModesKHR(*m_surface)),
             true,
-            nullptr};
+            m_old_swapchain_sptr ? m_old_swapchain_sptr->handle() : nullptr};
 
-    m_swapchain = vk::raii::SwapchainKHR(m_device.device(), swapchain_info);
+    if (m_old_swapchain_sptr) {
+        m_old_swapchain_sptr = nullptr;
+    }
 
+    m_swapchain = vk::raii::SwapchainKHR{m_device.device(), swapchain_info};
     m_images = m_swapchain.getImages();
+
+    static const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
+    vulkan_logger->set_level(spdlog::level::trace);
+    vulkan_logger->trace("Swapchain is created:"
+                         "\n\tExtent: {}x{}"
+                         "\n\tColor format: {}"
+                         "\n\tColor space: {}",
+                         m_extent.width,
+                         m_extent.height,
+                         vk::to_string(surface_format.format),
+                         vk::to_string(surface_format.colorSpace));
 }
 
 } // namespace sm::arcane::vulkan

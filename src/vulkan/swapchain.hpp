@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 
+#include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
 #include "vulkan/device.hpp"
@@ -15,27 +15,29 @@ namespace sm::arcane::vulkan {
 
 class Swapchain {
 public:
-    explicit Swapchain(const Device &device, const Window &window, const vk::raii::SurfaceKHR &surface);
+    explicit Swapchain(Device &device,
+                       const Window &window,
+                       const vk::raii::SurfaceKHR &surface,
+                       Swapchain *old_swapchain_ptr = nullptr);
 
+    [[nodiscard]] vk::SwapchainKHR handle() const noexcept { return *m_swapchain; }
     void revalue();
 
 private:
-    const Device &m_device;
+    Device &m_device;
     const Window &m_window;
     const vk::raii::SurfaceKHR &m_surface;
 
-    vk::Format m_format;
-
-    vk::raii::CommandPool m_command_pool;
-    vk::raii::CommandBuffer m_command_buffer;
+    vk::raii::CommandPool m_command_pool = nullptr;
+    vk::raii::CommandBuffer m_command_buffer = nullptr;
 
     vk::Extent2D m_extent;
-
+    Swapchain *m_old_swapchain_sptr = nullptr;
     vk::raii::SwapchainKHR m_swapchain = nullptr;
 
+    vk::Format m_color_format{};
     std::vector<vk::Image> m_images;
-
-    std::unique_ptr<vk::raii::SwapchainKHR> m_old_swapchain_khr;
+    vk::Flags<vk::ImageUsageFlagBits> m_image_usages;
 };
 
 } // namespace sm::arcane::vulkan
