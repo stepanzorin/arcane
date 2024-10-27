@@ -145,16 +145,13 @@ void Swapchain::revalue() {
             true,
             m_old_swapchain_sptr ? m_old_swapchain_sptr->handle() : nullptr};
 
-    if (m_old_swapchain_sptr) {
-        m_old_swapchain_sptr = nullptr;
-    }
-
+    m_old_swapchain_sptr = nullptr;
     m_swapchain = vk::raii::SwapchainKHR{m_device.device(), swapchain_info};
     m_images = m_swapchain.getImages();
 
     static const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
     vulkan_logger->set_level(spdlog::level::trace);
-    vulkan_logger->trace("Swapchain is created:"
+    vulkan_logger->trace("Swapchain is recreated:"
                          "\n\tExtent: {}x{}"
                          "\n\tColor format: {}"
                          "\n\tColor space: {}",
