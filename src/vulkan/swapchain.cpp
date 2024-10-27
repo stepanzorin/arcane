@@ -65,6 +65,21 @@ namespace {
     return picked_format;
 }
 
+[[nodiscard]] vk::Format pick_depth_format(const vk::raii::PhysicalDevice &physical_device) {
+    constexpr auto candidates = std::array{vk::Format::eD32Sfloat,
+                                           vk::Format::eD32SfloatS8Uint,
+                                           vk::Format::eD24UnormS8Uint};
+
+    for (const auto format : candidates) {
+        const auto properties = physical_device.getFormatProperties(format);
+        if (properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+            return format;
+        }
+    }
+
+    throw std::runtime_error{"Failed to find supported depth stencil format"};
+}
+
 } // namespace
 
 Swapchain::Swapchain(Device &device,
@@ -149,16 +164,21 @@ void Swapchain::revalue() {
     m_swapchain = vk::raii::SwapchainKHR{m_device.device(), swapchain_info};
     m_images = m_swapchain.getImages();
 
+    const auto depth_stencil_format = pick_depth_format(physical_device);
+    m_depth_format = depth_stencil_format;
+
     static const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
     vulkan_logger->set_level(spdlog::level::trace);
     vulkan_logger->trace("Swapchain is recreated:"
                          "\n\tExtent: {}x{}"
                          "\n\tColor format: {}"
-                         "\n\tColor space: {}",
+                         "\n\tColor space: {}"
+                         "\n\tDepth stencil format: {}",
                          m_extent.width,
                          m_extent.height,
                          vk::to_string(surface_format.format),
-                         vk::to_string(surface_format.colorSpace));
+                         vk::to_string(surface_format.colorSpace),
+                         vk::to_string(depth_stencil_format));
 }
 
 } // namespace sm::arcane::vulkan

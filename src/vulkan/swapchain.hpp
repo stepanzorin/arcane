@@ -37,6 +37,8 @@ private:
     vk::Format m_color_format{};
     std::vector<vk::Image> m_images;
     vk::Flags<vk::ImageUsageFlagBits> m_image_usages;
+
+    vk::Format m_depth_format{};
 };
 
 } // namespace sm::arcane::vulkan
