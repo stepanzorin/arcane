@@ -137,11 +137,7 @@ namespace {
                                                       config.version.major,
                                                       VK_API_VERSION_1_3};
 
-#if SM_ARCANE_RELEASE_MODE
-    auto instance_create_info = vk::StructureChain<vk::InstanceCreateInfo>{
-            {{}, &application_info, enabled_layers, enabled_extensions}};
-#else
-
+#if SM_ARCANE_DEBUG_MODE
     const auto severity_flags = vk::DebugUtilsMessageSeverityFlagsEXT{
             vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError};
 
@@ -152,6 +148,9 @@ namespace {
     const auto instance_create_info = vk::StructureChain<vk::InstanceCreateInfo, vk::DebugUtilsMessengerCreateInfoEXT>{
             {{}, &application_info, enabled_layers, enabled_extensions},
             {{}, severity_flags, message_type_flags, &debug_utils_messenger_callback}};
+#else
+    auto instance_create_info = vk::StructureChain<vk::InstanceCreateInfo>{
+            {{}, &application_info, enabled_layers, enabled_extensions}};
 #endif
 
     return {context, instance_create_info.get<vk::InstanceCreateInfo>()};
