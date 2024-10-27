@@ -99,7 +99,6 @@
 #if defined(SM_ARCANE_COMPILER_MSVC)
     #define SM_ARCANE_DISABLE_WARNING_PUSH __pragma(warning(push))
     #define SM_ARCANE_DISABLE_WARNING_POP __pragma(warning(pop))
-    #define SM_ARCANE_DISABLE_WARNING(warning_number) __pragma(warning(disable : warning_number))
 #elif defined(SM_ARCANE_COMPILER_GCC) || defined(SM_ARCANE_COMPILER_CLANG)
     #define SM_ARCANE_DISABLE_WARNING_PUSH _Pragma("GCC diagnostic push")
     #define SM_ARCANE_DISABLE_WARNING_POP _Pragma("GCC diagnostic pop")
