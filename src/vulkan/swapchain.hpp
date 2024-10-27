@@ -5,7 +5,6 @@
 
 #include <vector>
 
-#include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
 #include "vulkan/device.hpp"
