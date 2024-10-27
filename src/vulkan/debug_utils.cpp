@@ -1,13 +1,9 @@
 #include "debug_utils.hpp"
 
-#include <cstdint>
-
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
-
-#include "os.h"
 
 namespace sm::arcane::vulkan {
 

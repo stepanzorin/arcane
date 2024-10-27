@@ -9,18 +9,27 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(arcane src/main.cpp)
 
+option(SM_ARCANE_DEBUG_MODE "Enable debugging" OFF)
+if (SM_ARCANE_DEBUG_MODE)
+    target_compile_defintions(arcane PRIVATE SM_ARCANE_DEBUG_MODE)
+endif ()
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_compile_definitions(arcane PRIVATE VK_USE_PLATFORM_WIN32_KHR=1 NOMINMAX)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_compile_definitions(arcane PRIVATE VK_USE_PLATFORM_XCB_KHR=1)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_compile_definitions(arcane PRIVATE VK_USE_PLATFORM_MACOS_MVK=1)
+endif ()
+
 target_compile_definitions(arcane PRIVATE SM_ARCANE_PROJECT_NAME="${CMAKE_PROJECT_NAME}")
 target_compile_definitions(
     arcane
     PRIVATE SM_ARCANE_PROJECT_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
             SM_ARCANE_PROJECT_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
             SM_ARCANE_PROJECT_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH})
-
 target_compile_definitions(arcane PRIVATE SM_ARCANE_APPLICATION_DIR_PATH="${PROJECT_SOURCE_DIR}")
 
 set(GLSLC_EXECUTABLE $ENV{VK_SDK_PATH}/Bin/glslc.exe)
-
-target_include_directories(arcane PUBLIC src)
 
 # [ FORWARD SORT BY PACKAGE NAME ]
 find_package(Boost REQUIRED)
@@ -48,5 +57,7 @@ target_link_libraries(
             stb::stb
             tinyobjloader::tinyobjloader
             Vulkan::Vulkan)
+
+target_include_directories(arcane PUBLIC src)
 
 add_subdirectory(src)

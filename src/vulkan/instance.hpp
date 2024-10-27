@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "os.h"
-
 #include <vector>
 
 #include <vulkan/vulkan_raii.hpp>
