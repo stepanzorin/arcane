@@ -50,18 +50,18 @@ namespace {
 
         static constexpr auto requested_color_space = vk::ColorSpaceKHR::eSrgbNonlinear;
         for (const auto requested_format : requested_formats) {
-            const auto it = ranges::find_if(formats, [&](const vk::SurfaceFormatKHR &f) {
+            const auto found_format_it = ranges::find_if(formats, [&](const vk::SurfaceFormatKHR &f) {
                 return f.format == requested_format && f.colorSpace == requested_color_space;
             });
 
-            if (it != formats.cend()) {
-                picked_format = *it;
+            if (found_format_it != formats.cend()) {
+                picked_format = *found_format_it;
                 break;
             }
         }
     }
-
     assert(picked_format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear);
+
     return picked_format;
 }
 
