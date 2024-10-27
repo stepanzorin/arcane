@@ -31,7 +31,7 @@ private:
     vk::raii::CommandBuffer m_command_buffer = nullptr;
 
     vk::Extent2D m_extent;
-    Swapchain *m_old_swapchain_sptr = nullptr;
+    Swapchain *m_old_swapchain_ptr = nullptr;
     vk::raii::SwapchainKHR m_swapchain = nullptr;
 
     vk::Format m_color_format{};

@@ -98,7 +98,7 @@ Swapchain::Swapchain(Device &device,
               device.device(),
               vk::CommandBufferAllocateInfo{m_command_pool, vk::CommandBufferLevel::ePrimary, 1}}
                                          .front())},
-      m_old_swapchain_sptr{old_swapchain_ptr} {
+      m_old_swapchain_ptr{old_swapchain_ptr} {
     revalue();
 }
 
@@ -158,9 +158,9 @@ void Swapchain::revalue() {
                             : vk::CompositeAlphaFlagBitsKHR::eOpaque},
             pick_present_mode(physical_device.getSurfacePresentModesKHR(*m_surface)),
             true,
-            m_old_swapchain_sptr ? m_old_swapchain_sptr->handle() : nullptr};
+            m_old_swapchain_ptr ? m_old_swapchain_ptr->handle() : nullptr};
 
-    m_old_swapchain_sptr = nullptr;
+    m_old_swapchain_ptr = nullptr;
     m_swapchain = vk::raii::SwapchainKHR{m_device.device(), swapchain_info};
     m_images = m_swapchain.getImages();
 
