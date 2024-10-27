@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(arcane src/main.cpp)
 
-target_compile_definitions(arcane PRIVATE $<$<CONFIG:Debug>:SM_ARCANE_DEBUG_MODE>)
 option(SM_ARCANE_DEBUG_MODE "Enable debugging" OFF)
 if (SM_ARCANE_DEBUG_MODE)
     target_compile_definitions(arcane PRIVATE SM_ARCANE_DEBUG_MODE=1)
