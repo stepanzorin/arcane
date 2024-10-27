@@ -27,7 +27,6 @@ debug_utils_messenger_callback(const VkDebugUtilsMessageSeverityFlagBitsEXT mess
                                const VkDebugUtilsMessageTypeFlagsEXT message_types,
                                const VkDebugUtilsMessengerCallbackDataEXT *callback_data_ptr,
                                void * /* user_data_ptr */) noexcept {
-    #if SM_ARCANE_DEBUG_MODE
     // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
     switch (static_cast<std::uint32_t>(callback_data_ptr->messageIdNumber)) {
         // Validation Warning: Override layer has override paths set to C:/VulkanSDK/<version>/Bin
@@ -42,7 +41,6 @@ debug_utils_messenger_callback(const VkDebugUtilsMessageSeverityFlagBitsEXT mess
         // performance.
         case 0xe8d1a9fe: return vk::False;
     }
-    #endif
 
     const auto logger = spdlog::default_logger()->clone("vulkan_debug_messenger");
     logger->error("{}", callback_data_ptr->pMessage);
