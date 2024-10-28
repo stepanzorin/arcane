@@ -31,7 +31,7 @@ namespace {
 
 [[nodiscard]] queue_family_indices_s find_graphics_and_present_queue_family_index(
         const vk::raii::PhysicalDevice &physical_device,
-        const vk::raii::SurfaceKHR &surface) {
+        const vk::SurfaceKHR surface) {
     const auto queue_family_properties = physical_device.getQueueFamilyProperties();
     assert(queue_family_properties.size() < (std::numeric_limits<std::uint32_t>::max)());
 
@@ -116,7 +116,7 @@ namespace {
 
 } // namespace
 
-Device::Device(const vk::raii::Instance &instance, const vk::raii::SurfaceKHR &surface)
+Device::Device(const vk::raii::Instance &instance, const vk::SurfaceKHR surface)
     : m_physical_device{pick_physical_device(instance)},
       m_device{create_logical_device(m_physical_device)},
       m_queue_family_indices{find_graphics_and_present_queue_family_index(m_physical_device, surface)} {}

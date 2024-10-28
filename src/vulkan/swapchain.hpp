@@ -16,7 +16,7 @@ class Swapchain {
 public:
     explicit Swapchain(Device &device,
                        const Window &window,
-                       const vk::raii::SurfaceKHR &surface,
+                       vk::SurfaceKHR surface,
                        Swapchain *old_swapchain_ptr = nullptr);
 
     [[nodiscard]] vk::SwapchainKHR handle() const noexcept { return *m_swapchain; }
@@ -25,7 +25,7 @@ public:
 private:
     Device &m_device;
     const Window &m_window;
-    const vk::raii::SurfaceKHR &m_surface;
+    vk::SurfaceKHR m_surface;
 
     vk::raii::CommandPool m_command_pool = nullptr;
     vk::raii::CommandBuffer m_command_buffer = nullptr;

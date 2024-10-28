@@ -20,7 +20,7 @@ struct queue_family_indices_s {
 class Device {
 public:
     Device() = delete;
-    explicit Device(const vk::raii::Instance &instance, const vk::raii::SurfaceKHR &surface);
+    explicit Device(const vk::raii::Instance &instance, const vk::SurfaceKHR surface);
 
     [[nodiscard]] const vk::raii::PhysicalDevice &physical_device() const noexcept { return m_physical_device; }
     [[nodiscard]] const vk::raii::Device &device() const noexcept { return m_device; }

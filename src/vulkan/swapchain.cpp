@@ -12,9 +12,11 @@
 
 namespace sm::arcane::vulkan {
 namespace {
-[[nodiscard]] vk::PresentModeKHR pick_present_mode(const std::vector<vk::PresentModeKHR> &present_modes) noexcept {
+[[nodiscard]] vk::PresentModeKHR pick_present_mode(const vk::PhysicalDevice physical_device,
+                                                   const vk::SurfaceKHR surface) noexcept {
     auto picked_mode = vk::PresentModeKHR::eFifo; // The FIFO present mode is guaranteed by the spec to be supported
 
+    const auto present_modes = physical_device.getSurfacePresentModesKHR(surface);
     for (const auto &present_mode : present_modes) {
         if (present_mode == vk::PresentModeKHR::eMailbox) {
             picked_mode = present_mode;
@@ -29,7 +31,9 @@ namespace {
     return picked_mode;
 }
 
-[[nodiscard]] vk::SurfaceFormatKHR pick_surface_format(const std::vector<vk::SurfaceFormatKHR> &formats) noexcept {
+[[nodiscard]] vk::SurfaceFormatKHR pick_surface_format(const vk::PhysicalDevice physical_device,
+                                                       const vk::SurfaceKHR surface) noexcept {
+    const auto formats = physical_device.getSurfaceFormatsKHR(surface);
     assert(!formats.empty());
 
     auto picked_format = formats.front();
@@ -63,7 +67,7 @@ namespace {
     return picked_format;
 }
 
-[[nodiscard]] vk::Format pick_depth_format(const vk::raii::PhysicalDevice &physical_device) {
+[[nodiscard]] vk::Format pick_depth_format(const vk::PhysicalDevice physical_device) {
     static constexpr auto candidates = std::array{vk::Format::eD32Sfloat,
                                                   vk::Format::eD32SfloatS8Uint,
                                                   vk::Format::eD24UnormS8Uint};
@@ -90,15 +94,15 @@ namespace {
         return vk::ImageTiling::eOptimal;
     }
 
-    throw std::runtime_error(
-            fmt::format{"DepthStencilAttachment is not supported for {} depth format", vk::to_string(depth_format)});
+    throw std::runtime_error{
+            fmt::format("DepthStencilAttachment is not supported for {} depth format", vk::to_string(depth_format))};
 }
 
 } // namespace
 
 Swapchain::Swapchain(Device &device,
                      const Window &window,
-                     const vk::raii::SurfaceKHR &surface,
+                     const vk::SurfaceKHR surface,
                      Swapchain *old_swapchain_ptr /* = nullptr */)
     : m_device{device},
       m_window{window},
@@ -121,7 +125,7 @@ void Swapchain::revalue() {
 
     const auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(m_surface);
 
-    const auto surface_format = pick_surface_format(physical_device.getSurfaceFormatsKHR(*m_surface));
+    const auto surface_format = pick_surface_format(physical_device, m_surface);
     m_color_format = surface_format.format;
 
     m_extent = [&, this] -> vk::Extent2D {
@@ -170,7 +174,7 @@ void Swapchain::revalue() {
                     : (surface_capabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit)
                             ? vk::CompositeAlphaFlagBitsKHR::eInherit
                             : vk::CompositeAlphaFlagBitsKHR::eOpaque},
-            pick_present_mode(physical_device.getSurfacePresentModesKHR(*m_surface)),
+            pick_present_mode(*physical_device, m_surface),
             true,
             m_old_swapchain_ptr ? m_old_swapchain_ptr->handle() : nullptr};
 
