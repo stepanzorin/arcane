@@ -39,6 +39,9 @@ private:
     std::vector<vk::raii::ImageView> m_image_views; // TODO: to do using VMA
     vk::Flags<vk::ImageUsageFlagBits> m_image_usages;
 
+
+    // TODO: to init when `vulkan::Device` will be support a job with `DeviceMemory
+    // vk::raii::DeviceMemory m_depth_stencil_memory;
     vk::Format m_depth_format{};
     vk::raii::Image m_depth_image = nullptr; // TODO: to do using VMA
     vk::raii::ImageView m_depth_image_view = nullptr; // TODO: to do using VMA

@@ -179,7 +179,7 @@ void Swapchain::revalue() {
             m_old_swapchain_ptr ? m_old_swapchain_ptr->handle() : nullptr};
 
     m_old_swapchain_ptr = nullptr;
-    m_swapchain = vk::raii::SwapchainKHR{m_device.device(), swapchain_info};
+    m_swapchain = {m_device.device(), swapchain_info};
     m_images = m_swapchain.getImages();
 
     m_image_views.clear();
@@ -198,21 +198,28 @@ void Swapchain::revalue() {
     }
 
     m_depth_format = pick_depth_format(physical_device);
-    m_depth_image = vk::raii::Image{
-            m_device.device(),
-            vk::ImageCreateInfo{{},
-                                vk::ImageType::e2D,
-                                m_depth_format,
-                                vk::Extent3D{m_extent, 1},
-                                1,
-                                1,
-                                vk::SampleCountFlagBits::e1,
-                                pick_depth_tiling_format(*physical_device, m_depth_format),
-                                vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
-                                vk::SharingMode::eExclusive,
-                                {},
-                                nullptr,
-                                vk::ImageLayout::eUndefined}};
+    m_depth_image = {m_device.device(),
+                     {{},
+                      vk::ImageType::e2D,
+                      m_depth_format,
+                      vk::Extent3D{m_extent, 1},
+                      1,
+                      1,
+                      vk::SampleCountFlagBits::e1,
+                      pick_depth_tiling_format(*physical_device, m_depth_format),
+                      vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
+                      vk::SharingMode::eExclusive,
+                      {},
+                      nullptr,
+                      vk::ImageLayout::eUndefined}};
+
+    m_depth_image_view = {m_device.device(),
+                          {{},
+                           m_depth_image,
+                           vk::ImageViewType::e2D,
+                           m_depth_format,
+                           {},
+                           {vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1}}};
 
     static const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
     vulkan_logger->set_level(spdlog::level::trace);
