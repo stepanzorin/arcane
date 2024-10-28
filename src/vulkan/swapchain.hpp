@@ -35,10 +35,14 @@ private:
     vk::raii::SwapchainKHR m_swapchain = nullptr;
 
     vk::Format m_color_format{};
-    std::vector<vk::Image> m_images;
+    std::vector<vk::Image> m_images; // TODO: to do using VMA
+    std::vector<vk::raii::ImageView> m_image_views; // TODO: to do using VMA
     vk::Flags<vk::ImageUsageFlagBits> m_image_usages;
 
     vk::Format m_depth_format{};
+    vk::raii::Image m_depth_image = nullptr; // TODO: to do using VMA
+    vk::raii::ImageView m_depth_image_view = nullptr; // TODO: to do using VMA
+    vk::Flags<vk::ImageUsageFlagBits> m_depth_image_usages;
 };
 
 } // namespace sm::arcane::vulkan

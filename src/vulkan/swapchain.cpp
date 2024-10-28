@@ -11,9 +11,7 @@
 #include <spdlog/spdlog.h>
 
 namespace sm::arcane::vulkan {
-
 namespace {
-
 [[nodiscard]] vk::PresentModeKHR pick_present_mode(const std::vector<vk::PresentModeKHR> &present_modes) noexcept {
     auto picked_mode = vk::PresentModeKHR::eFifo; // The FIFO present mode is guaranteed by the spec to be supported
 
@@ -78,6 +76,22 @@ namespace {
     }
 
     throw std::runtime_error{"Failed to find supported depth stencil format"};
+}
+
+[[nodiscard]] vk::ImageTiling pick_depth_tiling_format(const vk::PhysicalDevice physical_device,
+                                                       const vk::Format depth_format) {
+    const auto depth_format_properties = physical_device.getFormatProperties(depth_format);
+
+    if (depth_format_properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+        return vk::ImageTiling::eLinear;
+    }
+
+    if (depth_format_properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+        return vk::ImageTiling::eOptimal;
+    }
+
+    throw std::runtime_error(
+            fmt::format{"DepthStencilAttachment is not supported for {} depth format", vk::to_string(depth_format)});
 }
 
 } // namespace
@@ -164,8 +178,37 @@ void Swapchain::revalue() {
     m_swapchain = vk::raii::SwapchainKHR{m_device.device(), swapchain_info};
     m_images = m_swapchain.getImages();
 
-    const auto depth_stencil_format = pick_depth_format(physical_device);
-    m_depth_format = depth_stencil_format;
+    m_image_views.clear();
+    m_image_views.reserve(m_images.size());
+    {
+        auto image_view_create_info = vk::ImageViewCreateInfo{{},
+                                                              {},
+                                                              vk::ImageViewType::e2D,
+                                                              m_color_format,
+                                                              {},
+                                                              {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+        for (const auto image : m_images) {
+            image_view_create_info.image = image;
+            m_image_views.emplace_back(m_device.device(), image_view_create_info);
+        }
+    }
+
+    m_depth_format = pick_depth_format(physical_device);
+    m_depth_image = vk::raii::Image{
+            m_device.device(),
+            vk::ImageCreateInfo{{},
+                                vk::ImageType::e2D,
+                                m_depth_format,
+                                vk::Extent3D{m_extent, 1},
+                                1,
+                                1,
+                                vk::SampleCountFlagBits::e1,
+                                pick_depth_tiling_format(*physical_device, m_depth_format),
+                                vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
+                                vk::SharingMode::eExclusive,
+                                {},
+                                nullptr,
+                                vk::ImageLayout::eUndefined}};
 
     static const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
     vulkan_logger->set_level(spdlog::level::trace);
@@ -178,7 +221,7 @@ void Swapchain::revalue() {
                          m_extent.height,
                          vk::to_string(surface_format.format),
                          vk::to_string(surface_format.colorSpace),
-                         vk::to_string(depth_stencil_format));
+                         vk::to_string(m_depth_format));
 }
 
 } // namespace sm::arcane::vulkan
