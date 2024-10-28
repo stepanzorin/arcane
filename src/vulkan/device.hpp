@@ -20,11 +20,20 @@ struct queue_family_indices_s {
 class Device {
 public:
     Device() = delete;
-    explicit Device(const vk::raii::Instance &instance, const vk::SurfaceKHR surface);
+    explicit Device(const vk::raii::Instance &instance, vk::SurfaceKHR surface);
 
     [[nodiscard]] const vk::raii::PhysicalDevice &physical_device() const noexcept { return m_physical_device; }
     [[nodiscard]] const vk::raii::Device &device() const noexcept { return m_device; }
     [[nodiscard]] queue_family_indices_s queue_family_indices() const noexcept { return m_queue_family_indices; }
+
+    [[nodiscard]] vk::raii::DeviceMemory allocate_buffer_device_memory(
+            vk::Buffer buffer,
+            vk::MemoryPropertyFlags memory_property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
+                                                            vk::MemoryPropertyFlagBits::eHostCoherent) const;
+
+    [[nodiscard]] vk::raii::DeviceMemory allocate_image_device_memory(
+            vk::Image image,
+            vk::MemoryPropertyFlags memory_property_flags) const;
 
     template<typename T, typename... Args>
     void set_object_name(T object, std::format_string<Args...> fmt, Args &&...args) const {

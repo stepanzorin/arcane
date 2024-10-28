@@ -114,11 +114,60 @@ namespace {
     return {physical_device, device_create_info};
 }
 
+[[nodiscard]] std::uint32_t find_memory_type(const vk::PhysicalDeviceMemoryProperties &memory_properties,
+                                             std::uint32_t type_bits,
+                                             const vk::MemoryPropertyFlags requirements_mask) noexcept {
+    auto type_index = static_cast<std::uint32_t>(~0);
+    for (auto i = 0u; i < memory_properties.memoryTypeCount; ++i) {
+        if ((type_bits & 1) &&
+            ((memory_properties.memoryTypes[i].propertyFlags & requirements_mask) == requirements_mask)) {
+            type_index = i;
+            break;
+        }
+        type_bits >>= 1;
+    }
+    assert(type_index != static_cast<std::uint32_t>(~0));
+
+    return type_index;
+}
+
+[[nodiscard]] vk::raii::DeviceMemory allocate_device_memory_impl(
+        const vk::raii::Device &device,
+        const vk::PhysicalDeviceMemoryProperties memory_properties,
+        const vk::MemoryRequirements2 requirements,
+        const vk::MemoryPropertyFlags memory_property_flags) {
+    const auto memory_type_index = find_memory_type(memory_properties,
+                                                    requirements.memoryRequirements.memoryTypeBits,
+                                                    memory_property_flags);
+    return device.allocateMemory({requirements.memoryRequirements.size, memory_type_index});
+}
+
 } // namespace
 
 Device::Device(const vk::raii::Instance &instance, const vk::SurfaceKHR surface)
     : m_physical_device{pick_physical_device(instance)},
       m_device{create_logical_device(m_physical_device)},
       m_queue_family_indices{find_graphics_and_present_queue_family_index(m_physical_device, surface)} {}
+
+vk::raii::DeviceMemory Device::allocate_buffer_device_memory(
+        const vk::Buffer buffer,
+        const vk::MemoryPropertyFlags memory_property_flags) const {
+    assert(buffer && "vk::Buffer must be initialized for the allocation");
+    assert(memory_property_flags && "Memory property flags for vk::Buffer must be initialized");
+    return allocate_device_memory_impl(m_device,
+                                       m_physical_device.getMemoryProperties(),
+                                       m_device.getBufferMemoryRequirements2(buffer),
+                                       memory_property_flags);
+}
+
+vk::raii::DeviceMemory Device::allocate_image_device_memory(const vk::Image image,
+                                                            const vk::MemoryPropertyFlags memory_property_flags) const {
+    assert(image && "vk::Image must be initialized for the allocation");
+    assert(memory_property_flags && "Memory property flags for vk::Image must be initialized");
+    return allocate_device_memory_impl(m_device,
+                                       m_physical_device.getMemoryProperties(),
+                                       m_device.getImageMemoryRequirements2(image),
+                                       memory_property_flags);
+}
 
 } // namespace sm::arcane::vulkan
