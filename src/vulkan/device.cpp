@@ -29,7 +29,9 @@ namespace {
     return static_cast<std::uint32_t>(std::distance(queue_family_properties.cbegin(), property_it));
 }
 
-[[nodiscard]] queue_family_indices_s find_graphics_and_present_queue_family_index(
+namespace detail {
+
+[[nodiscard]] std::pair<std::uint32_t, std::uint32_t> find_graphics_and_present_family_indices(
         const vk::raii::PhysicalDevice &physical_device,
         const vk::SurfaceKHR surface) {
     const auto queue_family_properties = physical_device.getQueueFamilyProperties();
@@ -38,7 +40,7 @@ namespace {
     const auto graphics_index = find_graphics_queue_family_index(queue_family_properties);
     if (physical_device.getSurfaceSupportKHR(graphics_index, surface)) {
         // the first `graphics_queue_family_index` does also support presents
-        return {.graphics_index = graphics_index, .present_index = graphics_index};
+        return {graphics_index, graphics_index};
     }
 
     // the `graphics_queue_family_index` doesn't support `present` -> look for another family index that supports both
@@ -46,7 +48,7 @@ namespace {
     for (auto i = std::size_t{0}; i < queue_family_properties.size(); ++i) {
         if ((queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics) &&
             physical_device.getSurfaceSupportKHR(static_cast<std::uint32_t>(i), surface)) {
-            return {.graphics_index = static_cast<std::uint32_t>(i), .present_index = static_cast<std::uint32_t>(i)};
+            return {static_cast<std::uint32_t>(i), static_cast<std::uint32_t>(i)};
         }
     }
 
@@ -54,11 +56,22 @@ namespace {
     // index that supports `present`
     for (auto i = std::size_t{0}; i < queue_family_properties.size(); ++i) {
         if (physical_device.getSurfaceSupportKHR(static_cast<std::uint32_t>(i), surface)) {
-            return {.graphics_index = graphics_index, .present_index = static_cast<std::uint32_t>(i)};
+            return {graphics_index, static_cast<std::uint32_t>(i)};
         }
     }
 
     throw std::runtime_error{"Failed to find the queues for both graphics or present"};
+}
+
+} // namespace detail
+
+[[nodiscard]] device_queue_families_s find_queue_families(const vk::raii::Device &device,
+                                                          const vk::raii::PhysicalDevice &physical_device,
+                                                          const vk::SurfaceKHR surface) {
+    const auto [graphics_index, present_index] = detail::find_graphics_and_present_family_indices(physical_device,
+                                                                                                  surface);
+    return {.graphics = {.index = graphics_index, .queue = {device, graphics_index, 0}},
+            .present = {.index = present_index, .queue = {device, present_index, 0}}};
 }
 
 [[nodiscard]] vk::raii::PhysicalDevice pick_physical_device(const vk::raii::Instance &instance) {
@@ -147,7 +160,7 @@ namespace {
 Device::Device(const vk::raii::Instance &instance, const vk::SurfaceKHR surface)
     : m_physical_device{pick_physical_device(instance)},
       m_device{create_logical_device(m_physical_device)},
-      m_queue_family_indices{find_graphics_and_present_queue_family_index(m_physical_device, surface)} {}
+      m_queue_families{find_queue_families(m_device, m_physical_device, surface)} {}
 
 vk::raii::DeviceMemory Device::allocate_buffer_device_memory(
         const vk::Buffer buffer,

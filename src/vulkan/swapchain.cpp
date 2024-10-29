@@ -108,9 +108,8 @@ Swapchain::Swapchain(Device &device,
       m_window{window},
       m_surface{surface},
       // create a `CommandPool` to allocate a `CommandBuffer` from
-      m_command_pool{
-              vk::raii::CommandPool{device.device(),
-                                    vk::CommandPoolCreateInfo{{}, device.queue_family_indices().graphics_index}}},
+      m_command_pool{vk::raii::CommandPool{device.device(),
+                                           vk::CommandPoolCreateInfo{{}, m_device.queue_families().graphics.index}}},
       // allocate a `CommandBuffer` from the `CommandPool`
       m_command_buffer{std::move(vk::raii::CommandBuffers{
               device.device(),
@@ -145,8 +144,8 @@ void Swapchain::revalue() {
 
     m_image_usages = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
 
-    const auto queue_family_indices = std::array{m_device.queue_family_indices().graphics_index,
-                                                 m_device.queue_family_indices().present_index};
+    const auto queue_family_indices = std::array{m_device.queue_families().graphics.index,
+                                                 m_device.queue_families().graphics.index};
 
     const auto swapchain_info = vk::SwapchainCreateInfoKHR{
             vk::SwapchainCreateFlagsKHR{},
@@ -157,11 +156,9 @@ void Swapchain::revalue() {
             m_extent,
             1,
             m_image_usages,
-            m_device.queue_family_indices().are_different() ? vk::SharingMode::eConcurrent
-                                                            : vk::SharingMode::eExclusive,
-            m_device.queue_family_indices().are_different() ? static_cast<std::uint32_t>(queue_family_indices.size())
-                                                            : 0,
-            m_device.queue_family_indices().are_different() ? queue_family_indices.data() : nullptr,
+            m_device.queue_families().are_different() ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive,
+            m_device.queue_families().are_different() ? static_cast<std::uint32_t>(queue_family_indices.size()) : 0,
+            m_device.queue_families().are_different() ? queue_family_indices.data() : nullptr,
             vk::SurfaceTransformFlagBitsKHR{
                     (surface_capabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity)
                             ? vk::SurfaceTransformFlagBitsKHR::eIdentity

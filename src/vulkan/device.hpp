@@ -10,11 +10,16 @@
 
 namespace sm::arcane::vulkan {
 
-struct queue_family_indices_s {
-    std::uint32_t graphics_index = 0;
-    std::uint32_t present_index = 0;
+struct device_queue_families_s {
+    struct family_s {
+        std::uint32_t index;
+        vk::raii::Queue queue;
+    };
 
-    [[nodiscard]] bool are_different() const noexcept { return graphics_index != present_index; }
+    family_s graphics;
+    family_s present;
+
+    [[nodiscard]] bool are_different() const noexcept { return graphics.index != present.index; }
 };
 
 class Device {
@@ -24,7 +29,7 @@ public:
 
     [[nodiscard]] const vk::raii::PhysicalDevice &physical_device() const noexcept { return m_physical_device; }
     [[nodiscard]] const vk::raii::Device &device() const noexcept { return m_device; }
-    [[nodiscard]] queue_family_indices_s queue_family_indices() const noexcept { return m_queue_family_indices; }
+    [[nodiscard]] device_queue_families_s queue_families() const noexcept { return m_queue_families; }
 
     [[nodiscard]] vk::raii::DeviceMemory allocate_buffer_device_memory(
             vk::Buffer buffer,
@@ -48,7 +53,7 @@ private:
     vk::raii::PhysicalDevice m_physical_device;
     vk::raii::Device m_device;
 
-    queue_family_indices_s m_queue_family_indices;
+    device_queue_families_s m_queue_families;
 };
 
 } // namespace sm::arcane::vulkan
