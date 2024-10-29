@@ -33,7 +33,7 @@ namespace {
         const vk::raii::PhysicalDevice &physical_device,
         const vk::SurfaceKHR surface) {
     const auto queue_family_properties = physical_device.getQueueFamilyProperties();
-    assert(queue_family_properties.size() < (std::numeric_limits<std::uint32_t>::max)());
+    assert(queue_family_properties.size() < std::numeric_limits<std::uint32_t>::max());
 
     const auto graphics_index = find_graphics_queue_family_index(queue_family_properties);
     if (physical_device.getSurfaceSupportKHR(graphics_index, surface)) {
@@ -117,7 +117,7 @@ namespace {
 [[nodiscard]] std::uint32_t find_memory_type(const vk::PhysicalDeviceMemoryProperties &memory_properties,
                                              std::uint32_t type_bits,
                                              const vk::MemoryPropertyFlags requirements_mask) noexcept {
-    auto type_index = static_cast<std::uint32_t>(~0);
+    auto type_index = std::numeric_limits<std::uint32_t>::max();
     for (auto i = 0u; i < memory_properties.memoryTypeCount; ++i) {
         if ((type_bits & 1) &&
             ((memory_properties.memoryTypes[i].propertyFlags & requirements_mask) == requirements_mask)) {
@@ -126,7 +126,7 @@ namespace {
         }
         type_bits >>= 1;
     }
-    assert(type_index != static_cast<std::uint32_t>(~0));
+    assert(type_index != std::numeric_limits<std::uint32_t>::max());
 
     return type_index;
 }

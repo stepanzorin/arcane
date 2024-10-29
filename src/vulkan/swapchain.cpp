@@ -129,7 +129,7 @@ void Swapchain::revalue() {
     m_color_format = surface_format.format;
 
     m_extent = [&, this] -> vk::Extent2D {
-        if (surface_capabilities.currentExtent.width != (std::numeric_limits<std::uint32_t>::max)()) {
+        if (surface_capabilities.currentExtent.width != std::numeric_limits<std::uint32_t>::max()) {
             // If the surface size is defined, the swap chain size must match
             return surface_capabilities.currentExtent;
         }
