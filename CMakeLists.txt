@@ -42,11 +42,12 @@ find_package(range-v3 REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(stb REQUIRED)
 find_package(tinyobjloader REQUIRED)
+find_package(vulkan-memory-allocator REQUIRED)
 find_package(Vulkan REQUIRED)
 
 target_link_libraries(
     arcane
-    PRIVATE # [ FORWARD SORT BY PACKAGE NAME ]
+    PRIVATE # cmake-format: sort
             Boost::boost
             Boost::json
             fmt::fmt
@@ -57,6 +58,7 @@ target_link_libraries(
             spdlog::spdlog
             stb::stb
             tinyobjloader::tinyobjloader
+            vulkan-memory-allocator::vulkan-memory-allocator
             Vulkan::Vulkan)
 
 target_include_directories(arcane PUBLIC src)
