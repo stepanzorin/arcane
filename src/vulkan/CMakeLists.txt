@@ -8,4 +8,6 @@ target_sources(
             instance.cpp
             instance.hpp
             swapchain.cpp
-            swapchain.hpp)
+            swapchain.hpp
+            vma_wrapper.cpp
+            vma_wrapper.hpp)
