@@ -42,11 +42,10 @@ public:
 
     template<typename T, typename... Args>
     void set_object_name(T object, std::format_string<Args...> fmt, Args &&...args) const {
-        m_device.setDebugUtilsObjectNameEXT(vk::DebugUtilsObjectNameInfoEXT{
-                object.objectType,
-                reinterpret_cast<std::uint64_t>(typename T::NativeType(object)),
-                std::format(fmt, std::forward<Args>(args)...).c_str(),
-        });
+        m_device.setDebugUtilsObjectNameEXT(
+                vk::DebugUtilsObjectNameInfoEXT{object.objectType,
+                                                reinterpret_cast<std::uint64_t>(typename T::NativeType(object)),
+                                                std::format(fmt, std::forward<Args>(args)...).c_str()});
     }
 
 private:
