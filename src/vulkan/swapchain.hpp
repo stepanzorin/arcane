@@ -8,6 +8,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include "vulkan/device.hpp"
+#include "vulkan/device_memory.hpp"
 #include "window.hpp"
 
 namespace sm::arcane::vulkan {
@@ -39,11 +40,7 @@ private:
     std::vector<vk::raii::ImageView> m_image_views; // TODO: to do using VMA
     vk::Flags<vk::ImageUsageFlagBits> m_image_usages;
 
-    vk::raii::DeviceMemory m_depth_stencil_memory = nullptr;
-    vk::Format m_depth_format{};
-    vk::raii::Image m_depth_image = nullptr; // TODO: to do using VMA
-    vk::raii::ImageView m_depth_image_view = nullptr; // TODO: to do using VMA
-    vk::Flags<vk::ImageUsageFlagBits> m_depth_image_usages;
+    DeviceMemoryImage m_depth_dm_image = nullptr; // TODO: to do using VMA
 };
 
 } // namespace sm::arcane::vulkan

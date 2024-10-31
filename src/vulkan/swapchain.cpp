@@ -194,34 +194,14 @@ void Swapchain::revalue() {
         }
     }
 
-    m_depth_format = pick_depth_format(physical_device);
-    m_depth_image_usages = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled;
-    m_depth_image = {m_device.device(),
-                     {{},
-                      vk::ImageType::e2D,
-                      m_depth_format,
-                      vk::Extent3D{m_extent, 1},
-                      1,
-                      1,
-                      vk::SampleCountFlagBits::e1,
-                      pick_depth_tiling_format(*physical_device, m_depth_format),
-                      m_depth_image_usages,
-                      vk::SharingMode::eExclusive,
-                      {},
-                      nullptr,
-                      vk::ImageLayout::eUndefined}};
-
-    m_depth_stencil_memory = m_device.allocate_image_device_memory(*m_depth_image,
-                                                                   vk::MemoryPropertyFlagBits::eDeviceLocal);
-    m_depth_image.bindMemory(m_depth_stencil_memory, 0);
-
-    m_depth_image_view = {m_device.device(),
-                          {{},
-                           m_depth_image,
-                           vk::ImageViewType::e2D,
-                           m_depth_format,
-                           {},
-                           {vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1}}};
+    m_depth_dm_image = m_device.create_device_memory_image(
+            pick_depth_format(physical_device),
+            m_extent,
+            pick_depth_tiling_format(*physical_device, pick_depth_format(physical_device)),
+            vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
+            vk::ImageLayout::eUndefined,
+            vk::MemoryPropertyFlagBits::eDeviceLocal,
+            vk::ImageAspectFlagBits::eDepth);
 
     static const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
     vulkan_logger->set_level(spdlog::level::trace);
@@ -234,7 +214,7 @@ void Swapchain::revalue() {
                          m_extent.height,
                          vk::to_string(surface_format.format),
                          vk::to_string(surface_format.colorSpace),
-                         vk::to_string(m_depth_format));
+                         vk::to_string(m_depth_dm_image.m_format));
 }
 
 } // namespace sm::arcane::vulkan

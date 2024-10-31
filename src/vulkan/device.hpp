@@ -6,7 +6,11 @@
 #include <cstdint>
 #include <format>
 
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_raii.hpp>
+
+#include "vulkan/device_memory.hpp"
 
 namespace sm::arcane::vulkan {
 
@@ -31,14 +35,32 @@ public:
     [[nodiscard]] const vk::raii::Device &device() const noexcept { return m_device; }
     [[nodiscard]] device_queue_families_s queue_families() const noexcept { return m_queue_families; }
 
-    [[nodiscard]] vk::raii::DeviceMemory allocate_buffer_device_memory(
-            vk::Buffer buffer,
+    [[nodiscard]] DeviceMemoryBuffer create_device_memory_buffer(
+            const vk::BufferUsageFlagBits usages,
+            const vk::DeviceSize size,
+            const vk::DeviceSize offset = 0,
             vk::MemoryPropertyFlags memory_property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
-                                                            vk::MemoryPropertyFlagBits::eHostCoherent) const;
+                                                            vk::MemoryPropertyFlagBits::eHostCoherent) const {
+        return {m_physical_device, m_device, usages, size, offset, memory_property_flags};
+    }
 
-    [[nodiscard]] vk::raii::DeviceMemory allocate_image_device_memory(
-            vk::Image image,
-            vk::MemoryPropertyFlags memory_property_flags) const;
+    [[nodiscard]] DeviceMemoryImage create_device_memory_image(const vk::Format format,
+                                                               const vk::Extent2D extent,
+                                                               const vk::ImageTiling tiling,
+                                                               const vk::ImageUsageFlags usage,
+                                                               const vk::ImageLayout initial_layout,
+                                                               const vk::MemoryPropertyFlags memory_properties,
+                                                               const vk::ImageAspectFlags aspect_mask) const {
+        return {m_physical_device,
+                m_device,
+                format,
+                extent,
+                tiling,
+                usage,
+                initial_layout,
+                memory_properties,
+                aspect_mask};
+    }
 
     template<typename T, typename... Args>
     void set_object_name(T object, std::format_string<Args...> fmt, Args &&...args) const {

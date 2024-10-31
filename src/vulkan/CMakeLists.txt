@@ -5,6 +5,8 @@ target_sources(
             config.hpp
             device.cpp
             device.hpp
+            device_memory.cpp
+            device_memory.hpp
             instance.cpp
             instance.hpp
             swapchain.cpp
