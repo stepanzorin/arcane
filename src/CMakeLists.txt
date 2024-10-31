@@ -1,4 +1,5 @@
 add_subdirectory(common)
+add_subdirectory(primitive_graphics)
 add_subdirectory(util)
 add_subdirectory(vulkan)
 
