@@ -125,6 +125,14 @@ void Swapchain::revalue() {
     const auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(m_surface);
 
     const auto surface_format = pick_surface_format(physical_device, m_surface);
+
+    static const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
+    vulkan_logger->info("Surface:"
+                        "\n\tColor format: {}"
+                        "\n\tColor space: {}",
+                        vk::to_string(surface_format.format),
+                        vk::to_string(surface_format.colorSpace));
+
     m_color_format = surface_format.format;
 
     m_extent = [&, this] -> vk::Extent2D {
@@ -203,17 +211,14 @@ void Swapchain::revalue() {
             vk::MemoryPropertyFlagBits::eDeviceLocal,
             vk::ImageAspectFlagBits::eDepth);
 
-    static const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
     vulkan_logger->set_level(spdlog::level::trace);
     vulkan_logger->trace("Swapchain is recreated:"
                          "\n\tExtent: {}x{}"
                          "\n\tColor format: {}"
-                         "\n\tColor space: {}"
                          "\n\tDepth stencil format: {}",
                          m_extent.width,
                          m_extent.height,
-                         vk::to_string(surface_format.format),
-                         vk::to_string(surface_format.colorSpace),
+                         vk::to_string(m_color_format),
                          vk::to_string(m_depth_dm_image.m_format));
 }
 

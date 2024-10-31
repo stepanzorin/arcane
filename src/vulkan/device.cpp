@@ -74,15 +74,21 @@ namespace detail {
             .present = {.index = present_index, .queue = {device, present_index, 0}}};
 }
 
-[[nodiscard]] vk::raii::PhysicalDevice pick_physical_device(const vk::raii::Instance &instance) {
-    const auto physical_devices = instance.enumeratePhysicalDevices();
-    if (physical_devices.empty()) {
-        throw std::runtime_error{"No Vulkan physical devices available"};
-    }
+void log_info_about_physical_device(const vk::PhysicalDeviceProperties picked_properties) {
+    const auto decode_vendor_id = [](const std::uint32_t vendor_id) -> std::string {
+        // below 0x10000 are the PCI vendor IDs (https://pcisig.com/membership/member-companies)
+        if (vendor_id < 0x10000) {
+            switch (vendor_id) {
+                case 0x1022: return "Advanced Micro Devices";
+                case 0x10DE: return "NVidia Corporation";
+                case 0x8086: return "Intel Corporation";
+                default: return std::to_string(vendor_id);
+            }
+        }
+        // above 0x10000 should be vkVendorIDs
+        return vk::to_string(static_cast<vk::VendorId>(vendor_id));
+    };
 
-    auto picked_device = physical_devices.front();
-
-    const auto picked_properties = picked_device.getProperties2().properties;
     const auto driver_version = picked_properties.driverVersion;
     const auto major_version = (driver_version >> 22) & 0x3FF;
     const auto minor_version = (driver_version >> 14) & 0xFF;
@@ -90,19 +96,30 @@ namespace detail {
 
     const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
     vulkan_logger->info("Picked physical device:"
+                        "\n\tVendor: {}"
                         "\n\tDevice Name: {}"
                         "\n\tDevice Type: {}"
                         "\n\tDevice Driver: {}.{}.{}"
                         "\n\tVulkan API Version: {}.{}.{}",
+                        decode_vendor_id(picked_properties.vendorID),
                         picked_properties.deviceName.data(),
                         vk::to_string(picked_properties.deviceType),
                         major_version,
                         minor_version,
                         patch_version,
-                        VK_VERSION_MAJOR(picked_properties.apiVersion),
-                        VK_VERSION_MINOR(picked_properties.apiVersion),
-                        VK_VERSION_PATCH(picked_properties.apiVersion));
+                        VK_API_VERSION_MAJOR(picked_properties.apiVersion),
+                        VK_API_VERSION_MINOR(picked_properties.apiVersion),
+                        VK_API_VERSION_PATCH(picked_properties.apiVersion));
+}
 
+[[nodiscard]] vk::raii::PhysicalDevice pick_physical_device(const vk::raii::Instance &instance) {
+    const auto physical_devices = instance.enumeratePhysicalDevices();
+    if (physical_devices.empty()) {
+        throw std::runtime_error{"No Vulkan physical devices available"};
+    }
+
+    auto picked_device = physical_devices.front();
+    log_info_about_physical_device(picked_device.getProperties2().properties);
     return picked_device;
 }
 
