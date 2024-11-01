@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <limits>
 #include <ranges>
-#include <spdlog/spdlog.h>
 
 namespace sm::arcane::vulkan {
 
@@ -54,10 +53,12 @@ DeviceMemoryBuffer::DeviceMemoryBuffer(
       device_memory{[&] {
           assert(*buffer && "vk::raii::Buffer must be initialized for the allocation");
           assert(property_flags && "Memory property flags for vk::raii::Buffer must be initialized");
-          return allocate_device_memory_impl(device,
+          auto device_memory = allocate_device_memory_impl(device,
                                              physical_device.getMemoryProperties(),
                                              device.getBufferMemoryRequirements2(*buffer),
                                              property_flags);
+          buffer.bindMemory(device_memory, offset);
+          return device_memory;
       }()}
 #if SM_ARCANE_DEBUG_MODE
       ,
@@ -66,7 +67,6 @@ DeviceMemoryBuffer::DeviceMemoryBuffer(
       property_flags{property_flags}
 #endif
 {
-    buffer.bindMemory(device_memory, offset);
 }
 
 DeviceMemoryImage::DeviceMemoryImage(const vk::raii::PhysicalDevice &physical_device,
@@ -78,33 +78,33 @@ DeviceMemoryImage::DeviceMemoryImage(const vk::raii::PhysicalDevice &physical_de
                                      const vk::ImageLayout initial_layout,
                                      const vk::MemoryPropertyFlags memory_properties,
                                      const vk::ImageAspectFlags aspect_mask)
-    : m_physical_device{*physical_device},
-      m_device{*device},
-      m_format{format},
-      m_image{device,
-              {{},
-               vk::ImageType::e2D,
-               format,
-               vk::Extent3D{extent, 1},
-               1,
-               1,
-               vk::SampleCountFlagBits::e1,
-               tiling,
-               usage,
-               vk::SharingMode::eExclusive,
-               {},
-               nullptr,
-               initial_layout}},
-      m_device_memory{[&] {
-          assert(*m_image && "vk::raii::Image must be initialized before the allocation");
+    : physical_device{*physical_device},
+      device{*device},
+      format{format},
+      image{device,
+            {{},
+             vk::ImageType::e2D,
+             format,
+             vk::Extent3D{extent, 1},
+             1,
+             1,
+             vk::SampleCountFlagBits::e1,
+             tiling,
+             usage,
+             vk::SharingMode::eExclusive,
+             {},
+             nullptr,
+             initial_layout}},
+      device_memory{[&] {
+          assert(*image && "vk::raii::Image must be initialized before the allocation");
           assert(memory_properties && "Memory property flags for vk::raii::Image must be initialized");
-          return allocate_device_memory_impl(device,
-                                             m_physical_device.getMemoryProperties(),
-                                             m_device.getImageMemoryRequirements2(*m_image),
-                                             memory_properties);
-      }()} {
-    m_image.bindMemory(m_device_memory, 0);
-    m_image_view = {device, {{}, m_image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}}};
-}
+          auto device_memory = allocate_device_memory_impl(device,
+                                                           physical_device.getMemoryProperties(),
+                                                           device.getImageMemoryRequirements2(*image),
+                                                           memory_properties);
+          image.bindMemory(device_memory, 0);
+          return device_memory;
+      }()},
+      image_view{device, {{}, image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}}} {}
 
 } // namespace sm::arcane::vulkan

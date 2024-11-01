@@ -219,7 +219,7 @@ void Swapchain::revalue() {
                          m_extent.width,
                          m_extent.height,
                          vk::to_string(m_color_format),
-                         vk::to_string(m_depth_dm_image.m_format));
+                         vk::to_string(m_depth_dm_image.format));
 }
 
 } // namespace sm::arcane::vulkan
