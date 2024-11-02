@@ -12,6 +12,8 @@ target_sources(
             application.hpp
             main.cpp
             os.h
+            renderer.cpp
+            renderer.hpp
             window.cpp
             window.hpp
             window_config.cpp
