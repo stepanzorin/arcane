@@ -7,6 +7,7 @@ target_sources(
             device.hpp
             device_memory.cpp
             device_memory.hpp
+            image_barriers.hpp
             instance.cpp
             instance.hpp
             swapchain.cpp
