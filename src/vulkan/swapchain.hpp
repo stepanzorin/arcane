@@ -21,6 +21,12 @@ public:
                        Swapchain *old_swapchain_ptr = nullptr);
 
     [[nodiscard]] vk::SwapchainKHR handle() const noexcept { return *m_swapchain; }
+    [[nodiscard]] const vk::raii::SwapchainKHR &get() const noexcept { return m_swapchain; }
+    [[nodiscard]] const std::vector<vk::Image> &color_images() const noexcept { return m_images; }
+    [[nodiscard]] const std::vector<vk::raii::ImageView> &color_image_views() const noexcept { return m_image_views; }
+    [[nodiscard]] const DeviceMemoryImage &depth_image() const noexcept { return m_depth_dm_image; }
+    [[nodiscard]] vk::SurfaceKHR surface() const noexcept { return m_surface; }
+    [[nodiscard]] vk::Extent2D extent() const noexcept { return m_extent; }
     void revalue();
 
 private:
