@@ -127,19 +127,32 @@ void log_info_about_physical_device(const vk::PhysicalDeviceProperties picked_pr
         // TODO: to support config for `(1) Note`. It is necessary to make a branch to select the necessary features
         /*const config_s &config*/
         const vk::raii::PhysicalDevice &physical_device) {
-    static constexpr auto device_extensions = std::array{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    auto supported_features = physical_device.getFeatures2<vk::PhysicalDeviceFeatures2,
+                                                           vk::PhysicalDeviceDynamicRenderingFeaturesKHR,
+                                                           vk::PhysicalDeviceSynchronization2FeaturesKHR>();
+
+    auto &dynamic_rendering_features = supported_features.get<vk::PhysicalDeviceDynamicRenderingFeaturesKHR>();
+    auto &synchronization2_features = supported_features.get<vk::PhysicalDeviceSynchronization2FeaturesKHR>();
+
+    dynamic_rendering_features.dynamicRendering = VK_TRUE;
+    synchronization2_features.synchronization2 = VK_TRUE;
+
+    static constexpr auto device_extensions = std::array{VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+                                                         VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+                                                         VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME};
 
     const auto queue_family_index = find_graphics_queue_family_index(physical_device.getQueueFamilyProperties());
     auto queue_priority = 0.0f;
     const auto device_queue_info = vk::DeviceQueueCreateInfo{{}, queue_family_index, 1, &queue_priority};
-    const auto device_create_info = vk::DeviceCreateInfo{{},
-                                                         device_queue_info,
-                                                         {},
-                                                         device_extensions,
-                                                         // (1) Note: `device_features` rarely has a feature set.
-                                                         // Only for non-regular goals. For example, `Ray Tracing`
-                                                         nullptr,
-                                                         nullptr};
+    const auto device_create_info = vk::DeviceCreateInfo{
+            {},
+            device_queue_info,
+            {},
+            device_extensions,
+            // (1) Note: `device_features` rarely has a feature set.
+            // Only for non-regular goals. For example, `Ray Tracing`
+            &supported_features.get<vk::PhysicalDeviceFeatures2>().features,
+            &dynamic_rendering_features};
 
     return {physical_device, device_create_info};
 }
