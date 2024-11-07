@@ -108,13 +108,10 @@ Swapchain::Swapchain(Device &device,
       m_window{window},
       m_surface{surface},
       // create a `CommandPool` to allocate a `CommandBuffer` from
-      m_command_pool{vk::raii::CommandPool{device.device(),
-                                           vk::CommandPoolCreateInfo{{}, m_device.queue_families().graphics.index}}},
-      // allocate a `CommandBuffer` from the `CommandPool`
-      m_command_buffer{std::move(vk::raii::CommandBuffers{
-              device.device(),
-              vk::CommandBufferAllocateInfo{m_command_pool, vk::CommandBufferLevel::ePrimary, 1}}
-                                         .front())},
+      m_command_pool{
+              vk::raii::CommandPool{device.device(),
+                                    vk::CommandPoolCreateInfo{{vk::CommandPoolCreateFlagBits::eResetCommandBuffer},
+                                                              m_device.queue_families().graphics.index}}},
       m_old_swapchain_ptr{old_swapchain_ptr} {
     revalue();
 }
@@ -210,6 +207,13 @@ void Swapchain::revalue() {
             vk::ImageLayout::eUndefined,
             vk::MemoryPropertyFlagBits::eDeviceLocal,
             vk::ImageAspectFlagBits::eDepth);
+
+    // allocate main `CommandBuffer`s from the `CommandPool` for each swap chain image and reuse for rendering
+    m_command_buffers = std::move(
+            vk::raii::CommandBuffers{m_device.device(),
+                                     vk::CommandBufferAllocateInfo{m_command_pool,
+                                                                   vk::CommandBufferLevel::ePrimary,
+                                                                   static_cast<std::uint32_t>(m_images.size())}}),
 
     vulkan_logger->set_level(spdlog::level::trace);
     vulkan_logger->trace("Swapchain is recreated:"

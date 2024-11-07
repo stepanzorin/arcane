@@ -22,6 +22,7 @@ public:
 
     [[nodiscard]] vk::SwapchainKHR handle() const noexcept { return *m_swapchain; }
     [[nodiscard]] const vk::raii::SwapchainKHR &get() const noexcept { return m_swapchain; }
+    [[nodiscard]] const vk::raii::CommandBuffers &command_buffers() const noexcept { return m_command_buffers; }
     [[nodiscard]] const std::vector<vk::Image> &color_images() const noexcept { return m_images; }
     [[nodiscard]] const std::vector<vk::raii::ImageView> &color_image_views() const noexcept { return m_image_views; }
     [[nodiscard]] const DeviceMemoryImage &depth_image() const noexcept { return m_depth_dm_image; }
@@ -35,7 +36,7 @@ private:
     vk::SurfaceKHR m_surface;
 
     vk::raii::CommandPool m_command_pool = nullptr;
-    vk::raii::CommandBuffer m_command_buffer = nullptr;
+    vk::raii::CommandBuffers m_command_buffers = nullptr;
 
     vk::Extent2D m_extent;
     Swapchain *m_old_swapchain_ptr = nullptr;

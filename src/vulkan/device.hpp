@@ -14,6 +14,8 @@
 
 namespace sm::arcane::vulkan {
 
+inline static constexpr auto g_max_frames_in_flight = 2u;
+
 struct device_queue_families_s {
     struct family_s {
         std::uint32_t index;

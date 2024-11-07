@@ -10,7 +10,7 @@ namespace sm::arcane::vulkan {
 struct DeviceMemoryBuffer {
 private:
     template<typename T>
-    void copy_to_memory(const T *const src_ptr, const std::size_t count, const vk::DeviceSize stride = sizeof(T)) {
+    void copy_to_memory(const T *src_ptr, const std::size_t count, const vk::DeviceSize stride = sizeof(T)) {
         assert(sizeof(T) <= stride);
         auto *dst_ptr = static_cast<std::uint8_t *>(device_memory.mapMemory(0, count * stride, {}));
         if (stride == sizeof(T)) {
@@ -52,7 +52,7 @@ public:
     explicit(false) DeviceMemoryBuffer(std::nullptr_t) {}
 
     template<typename T>
-    void upload(const T &data) const {
+    void upload(const T &data) {
         assert((property_flags & vk::MemoryPropertyFlagBits::eHostCoherent) &&
                (property_flags & vk::MemoryPropertyFlagBits::eHostVisible));
         assert(sizeof(T) <= size);
@@ -63,13 +63,13 @@ public:
     }
 
     template<typename T>
-    void upload(const std::span<T> data, const std::size_t stride = 0) const {
+    void upload(const T *data, const std::size_t count, const std::size_t stride = sizeof(T)) {
         assert(property_flags & vk::MemoryPropertyFlagBits::eHostVisible);
 
         const auto element_size = stride ? stride : sizeof(T);
         assert(sizeof(T) <= element_size);
 
-        copy_to_memory(data.data(), data.size(), element_size);
+        copy_to_memory(data, count, element_size);
     }
 };
 

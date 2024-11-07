@@ -10,6 +10,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include "app_config.hpp"
+#include "renderer.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/instance.hpp"
 #include "vulkan/swapchain.hpp"
@@ -49,6 +50,8 @@ private:
     vk::raii::SurfaceKHR m_surface;
     vulkan::Device m_device;
     std::unique_ptr<vulkan::Swapchain> m_swapchain_uptr;
+
+    Renderer m_renderer;
 };
 
 } // namespace sm::arcane
