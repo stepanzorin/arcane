@@ -11,39 +11,6 @@ struct vertex_s {
     float r, g, b, a; // Color
 };
 
-void update_descriptor_sets(vk::raii::Device const &device,
-                            vk::raii::DescriptorSet const &descriptor_set,
-                            std::vector<std::tuple<vk::DescriptorType,
-                                                   vk::raii::Buffer const &,
-                                                   vk::DeviceSize,
-                                                   vk::raii::BufferView const *>> const &buffer_data,
-                            std::nullptr_t,
-                            const std::uint32_t binding_offset = 0) {
-    std::vector<vk::DescriptorBufferInfo> bufferInfos;
-    bufferInfos.reserve(buffer_data.size());
-
-    std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-    writeDescriptorSets.reserve(buffer_data.size());
-    std::uint32_t dstBinding = binding_offset;
-    for (auto const &bd : buffer_data) {
-        bufferInfos.emplace_back(std::get<1>(bd), 0, std::get<2>(bd));
-        vk::BufferView bufferView;
-        if (std::get<3>(bd)) {
-            bufferView = *std::get<3>(bd);
-        }
-        writeDescriptorSets.emplace_back(descriptor_set,
-                                         dstBinding++,
-                                         0,
-                                         1,
-                                         std::get<0>(bd),
-                                         nullptr,
-                                         &bufferInfos.back(),
-                                         std::get<3>(bd) ? &bufferView : nullptr);
-    }
-
-    device.updateDescriptorSets(writeDescriptorSets, nullptr);
-}
-
 const vertex_s colored_cube_data[] = {
         // red face
         {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
@@ -105,17 +72,6 @@ vk::raii::DescriptorPool makeDescriptorPool(vk::raii::Device const &device,
     return vk::raii::DescriptorPool(device, descriptorPoolCreateInfo);
 }
 
-[[nodiscard]] bool is_depth_only_format(const vk::Format format) noexcept {
-    return format == vk::Format::eD16Unorm || format == vk::Format::eD32Sfloat;
-}
-
-/*bool is_depth_stencil_format(VkFormat format) {
-    return format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT ||
-           format == VK_FORMAT_D32_SFLOAT_S8_UINT;
-}
-
-bool is_depth_format(VkFormat format) { return is_depth_only_format(format) || is_depth_stencil_format(format); }*/
-
 [[nodiscard]] cube_render_resources_s create_render_resources(const vulkan::Device &device) {
     auto descriptor_pool = makeDescriptorPool(device.device(), {{vk::DescriptorType::eUniformBuffer, 1}});
 
@@ -164,11 +120,11 @@ void Renderer::build_command_buffer() {
     clear_values[1].depthStencil = vk::ClearDepthStencilValue{1.0f, 0};
 
     constexpr auto color_subresource_range = vk::ImageSubresourceRange{
-            /*.aspectMask = */ vk::ImageAspectFlagBits::eColor,
-            /*.baseMipLevel = */ 0,
-            /*.levelCount = */ vk::RemainingMipLevels,
-            /*.baseArrayLayer = */ 0,
-            /*.layerCount = */ vk::RemainingArrayLayers,
+            vk::ImageAspectFlagBits::eColor,
+            0,
+            vk::RemainingMipLevels,
+            0,
+            vk::RemainingArrayLayers,
     };
 
     auto depth_subresource_range = vk::ImageSubresourceRange{color_subresource_range};
@@ -199,32 +155,32 @@ void Renderer::build_command_buffer() {
                                         vk::ImageLayout::eDepthAttachmentOptimal,
                                         depth_subresource_range);
 
-        vk::RenderingAttachmentInfoKHR color_attachment{swapchain_color_image_view,
-                                                        vk::ImageLayout::eColorAttachmentOptimal,
-                                                        vk::ResolveModeFlagBits::eNone,
-                                                        {},
-                                                        {},
-                                                        vk::AttachmentLoadOp::eClear,
-                                                        vk::AttachmentStoreOp::eStore,
-                                                        clear_values[0]};
+        const auto color_attachment = vk::RenderingAttachmentInfoKHR{swapchain_color_image_view,
+                                                                     vk::ImageLayout::eColorAttachmentOptimal,
+                                                                     vk::ResolveModeFlagBits::eNone,
+                                                                     {},
+                                                                     {},
+                                                                     vk::AttachmentLoadOp::eClear,
+                                                                     vk::AttachmentStoreOp::eStore,
+                                                                     clear_values[0]};
 
-        vk::RenderingAttachmentInfoKHR depth_attachment{swapchain_depth_image_view,
-                                                        vk::ImageLayout::eDepthAttachmentOptimal,
-                                                        vk::ResolveModeFlagBits::eNone,
-                                                        {},
-                                                        {},
-                                                        vk::AttachmentLoadOp::eClear,
-                                                        vk::AttachmentStoreOp::eDontCare,
-                                                        clear_values[1]};
+        const auto depth_attachment = vk::RenderingAttachmentInfoKHR{swapchain_depth_image_view,
+                                                                     vk::ImageLayout::eDepthAttachmentOptimal,
+                                                                     vk::ResolveModeFlagBits::eNone,
+                                                                     {},
+                                                                     {},
+                                                                     vk::AttachmentLoadOp::eClear,
+                                                                     vk::AttachmentStoreOp::eDontCare,
+                                                                     clear_values[1]};
 
-        vk::RenderingInfoKHR rendering_info{
+        const auto rendering_info = vk::RenderingInfoKHR{
                 {},
                 vk::Rect2D{{0, 0}, extent},
-                1, // layerCount
-                0, // viewMask
-                1, // colorAttachmentCount
-                &color_attachment, // pColorAttachments
-                &depth_attachment, // pDepthAttachment
+                1,
+                0,
+                1,
+                &color_attachment,
+                &depth_attachment,
                 nullptr // TODO: is_depth_only_format() pStencilAttachment
         };
 
