@@ -15,18 +15,14 @@ layout(set = 0, binding = 0) uniform global_ubo_s {
 global_ubo;
 
 void main() {
-    // vec4 position_world = push.model_matrix * vec4(vertex_position, 1.0); need to support `push constants`
+    // vec4 position_world = push.model_matrix * vec4(vertex_position, 1.0); TODO: need to support `push constants`
 
-    // Сдвигаем объект на +5 по оси Z
-    mat4 model_matrix = mat4(1.0); // Инициализируем матрицу 4x4 как единичную
-    model_matrix[3][2] = 5.0; // Применяем сдвиг вдоль оси Z
+    mat4 model_matrix = mat4(1.0);
+    model_matrix[3][2] = 5.0;
 
-    // Применяем модельную матрицу к позиции вершины
     vec4 position_world = model_matrix * vec4(vertex_position, 1.0);
 
-    // Преобразуем мировую позицию в экранное пространство с помощью проекции и вида
     gl_Position = global_ubo.projection * global_ubo.view * position_world;
 
-    // Цвет фрагмента
     fragment_color = vertex_color;
 }
