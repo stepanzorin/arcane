@@ -6,11 +6,12 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
-#include <vector>
 
 #include <spdlog/logger.h>
 #include <vulkan/vulkan_raii.hpp>
 
+#include "cameras/camera.hpp"
+#include "primitive_graphics/mesh.hpp"
 #include "primitive_graphics/shaders/draw_mesh_pipeline.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/swapchain.hpp"
@@ -45,7 +46,7 @@ struct render_resources_s {
 // Temporary pipeline struct. Will remove the struct in the future
 struct cube_render_resources_s {
     vk::raii::DescriptorPool descriptor_pool;
-    vulkan::DeviceMemoryBuffer vertex_buffer;
+    primitive_graphics::Mesh cube_mesh;
     primitive_graphics::shaders::DynamicDrawMeshPipeline pipeline;
 };
 
@@ -71,6 +72,8 @@ private:
     prev_frame_info_s m_prev_frame_info{};
 
     std::array<frame_context_s, vulkan::g_max_frames_in_flight> m_frames{};
+
+    cameras::camera_s m_camera{};
 };
 
 } // namespace sm::arcane

@@ -14,16 +14,12 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include "common/shaders/pipeline_functions.hpp"
+#include "primitive_graphics/mesh.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/device_memory.hpp"
 #include "vulkan/image_barriers.hpp"
 
 namespace sm::arcane::primitive_graphics::shaders {
-
-struct Vertex {
-    float x, y, z, w; // Position
-    float r, g, b, a; // Color
-};
 
 inline glm::mat4x4 create_model_view_projection_clip_matrix(vk::Extent2D const &extent) {
     auto fov = glm::radians(30.0f);
@@ -145,13 +141,8 @@ private:
                                                                                false,
                                                                                false,
                                                                                vk::PolygonMode::eFill,
-                                                                               vk::CullModeFlagBits::eBack,
-                                                                               vk::FrontFace::eCounterClockwise,
-                                                                               false,
-                                                                               0.0f,
-                                                                               0.0f,
-                                                                               0.0f,
-                                                                               1.0f);
+                                                                               vk::CullModeFlagBits::eFront,
+                                                                               vk::FrontFace::eCounterClockwise);
 
         const auto colorComponentFlags = vk::ColorComponentFlags{
                 vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
@@ -192,10 +183,10 @@ private:
                 dynamic_state_enables.data()};
 
         constexpr auto vertex_input_bindings = std::array{
-                vk::VertexInputBindingDescription{0, sizeof(Vertex), vk::VertexInputRate::eVertex}};
+                vk::VertexInputBindingDescription{0, sizeof(Mesh::vertex_s), vk::VertexInputRate::eVertex}};
 
         constexpr auto vertex_input_attributes = std::array{
-                vk::VertexInputAttributeDescription{0, 0, vk::Format::eR32G32B32A32Sfloat, 0},
+                vk::VertexInputAttributeDescription{0, 0, vk::Format::eR32G32B32Sfloat, 0},
                 vk::VertexInputAttributeDescription{1, 0, vk::Format::eR32G32B32A32Sfloat, 16}};
 
         const auto vertex_input_info = vk::PipelineVertexInputStateCreateInfo{

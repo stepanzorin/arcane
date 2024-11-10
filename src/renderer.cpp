@@ -6,79 +6,22 @@ namespace sm::arcane {
 
 namespace {
 
-struct vertex_s {
-    float x, y, z, w; // Position
-    float r, g, b, a; // Color
-};
-
-const vertex_s colored_cube_data[] = {
-        // red face
-        {-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
-        {-1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
-        {1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
-        {1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
-        {-1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
-        {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f},
-        // green face
-        {-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f},
-        {1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f},
-        {-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f},
-        {-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f},
-        {1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f},
-        {1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f},
-        // blue face
-        {-1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
-        {-1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
-        {-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
-        {-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
-        {-1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
-        {-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f},
-        // yellow face
-        {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f},
-        {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f},
-        {1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f},
-        {1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f},
-        {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f},
-        {1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f},
-        // magenta face
-        {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f},
-        {-1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f},
-        {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f},
-        {1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f},
-        {-1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f},
-        {-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f},
-        // cyan face
-        {1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
-        {1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
-        {-1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
-        {-1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
-        {1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
-        {-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
-};
-
-vk::raii::DescriptorPool makeDescriptorPool(vk::raii::Device const &device,
-                                            std::vector<vk::DescriptorPoolSize> const &poolSizes) {
-    assert(!poolSizes.empty());
-    uint32_t maxSets = std::accumulate(
-            poolSizes.begin(),
-            poolSizes.end(),
+vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
+                                              const std::vector<vk::DescriptorPoolSize> &pool_sizes) {
+    assert(!pool_sizes.empty());
+    const auto max_sets = static_cast<std::uint32_t>(std::accumulate(
+            pool_sizes.begin(),
+            pool_sizes.end(),
             0,
-            [](uint32_t sum, vk::DescriptorPoolSize const &dps) { return sum + dps.descriptorCount; });
-    assert(0 < maxSets);
-
-    vk::DescriptorPoolCreateInfo descriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-                                                          maxSets,
-                                                          poolSizes);
-    return vk::raii::DescriptorPool(device, descriptorPoolCreateInfo);
+            [](const std::uint32_t sum, const vk::DescriptorPoolSize &dps) { return sum + dps.descriptorCount; }));
+    assert(0 < max_sets);
+    return {device,
+            vk::DescriptorPoolCreateInfo{vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, max_sets, pool_sizes}};
 }
 
-[[nodiscard]] cube_render_resources_s create_render_resources(const vulkan::Device &device) {
-    auto descriptor_pool = makeDescriptorPool(device.device(), {{vk::DescriptorType::eUniformBuffer, 1}});
-
-    auto vertex_buffer = device.create_device_memory_buffer(vk::BufferUsageFlagBits::eVertexBuffer,
-                                                            sizeof(colored_cube_data));
-
-    vertex_buffer.upload(colored_cube_data, sizeof(colored_cube_data) / sizeof(colored_cube_data[0]));
+[[nodiscard]] cube_render_resources_s create_render_resources(const vulkan::Device &device,
+                                                              const vk::CommandPool command_pool) {
+    auto descriptor_pool = make_descriptor_pool(device.device(), {{vk::DescriptorType::eUniformBuffer, 1}});
 
     auto pipeline = primitive_graphics::shaders::DynamicDrawMeshPipeline{device.device(),
                                                                          device.physical_device(),
@@ -86,8 +29,11 @@ vk::raii::DescriptorPool makeDescriptorPool(vk::raii::Device const &device,
                                                                          vk::Format::eB8G8R8A8Unorm,
                                                                          vk::Format::eD32Sfloat};
 
+    auto vertices = primitive_graphics::blanks::cube_vertices;
+    auto indices = primitive_graphics::blanks::cube_indices;
+
     return {.descriptor_pool = std::move(descriptor_pool),
-            .vertex_buffer = std::move(vertex_buffer),
+            .cube_mesh = primitive_graphics::Mesh{device, command_pool, std::move(vertices), std::move(indices)},
             .pipeline = std::move(pipeline)};
 }
 
@@ -99,7 +45,7 @@ Renderer::Renderer(vulkan::Device &device,
     : m_logger{std::move(renderer_logger)},
       m_device{device},
       m_swapchain{swapchain},
-      m_resources{create_render_resources(device)} {
+      m_resources{create_render_resources(device, m_swapchain.command_pool())} {
     for (auto &frame : m_frames) {
         frame.image_available_semaphore = vk::raii::Semaphore{m_device.device(), vk::SemaphoreCreateInfo{}};
         frame.render_finished_semaphore = vk::raii::Semaphore{m_device.device(), vk::SemaphoreCreateInfo{}};
@@ -205,8 +151,8 @@ void Renderer::build_command_buffer() {
                                           {*m_resources.pipeline.desc_set()},
                                           nullptr);
 
-        command_buffer.bindVertexBuffers(0, *m_resources.vertex_buffer.buffer, {0});
-        command_buffer.draw(36, 1, 0, 0);
+        m_resources.cube_mesh.bind(*command_buffer);
+        m_resources.cube_mesh.draw(*command_buffer);
 
         command_buffer.endRendering();
 
