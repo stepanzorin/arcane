@@ -116,6 +116,10 @@ Swapchain::Swapchain(Device &device,
     revalue();
 }
 
+float Swapchain::aspect_ratio() const noexcept {
+    return static_cast<float>(m_extent.width) / static_cast<float>(m_extent.height);
+}
+
 void Swapchain::revalue() {
     const auto &physical_device = m_device.physical_device();
 

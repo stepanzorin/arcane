@@ -122,27 +122,71 @@ template<typename T>
 
 } // namespace
 
-void camera_s::update(const float swapchain_aspect_ratio) {
-    auto &aspect_ratio = settings.aspect_ratio;
-    auto &prev_aspect_ratio = settings.prev_aspect_ratio;
+Camera::Camera(const float swapchain_aspect_ratio)
+    : m_swapchain_aspect_ratio{swapchain_aspect_ratio},
+      m_settings{camera_settings_s{m_swapchain_aspect_ratio}},
+      m_eye_d{create_camera_eye<double>(m_settings)},
+      m_matrices{calculate_camera_matrices<double>(m_eye_d, m_settings.aspect_ratio)} {}
+
+
+void Camera::loot_at(const glm::f64vec3 &target_position) noexcept {
+    m_matrices.view_matrix = compute_view_matrix(m_eye_d.transform.position,
+                                                 target_position - m_eye_d.transform.position,
+                                                 m_eye_d.transform.directions.up);
+    update_view_matrix();
+}
+
+void Camera::update() {
+    auto &aspect_ratio = m_settings.aspect_ratio;
+    auto &prev_aspect_ratio = m_settings.prev_aspect_ratio;
 
     prev_aspect_ratio = aspect_ratio;
-    aspect_ratio = swapchain_aspect_ratio;
+    aspect_ratio = m_swapchain_aspect_ratio;
 
     if (aspect_ratio != prev_aspect_ratio) {
-        eye_d.fov = compute_fov<double>(aspect_ratio);
-        matrices = calculate_camera_matrices<double>(eye_d, aspect_ratio);
+        m_eye_d.fov = compute_fov<double>(aspect_ratio);
+        m_matrices = calculate_camera_matrices<double>(m_eye_d, aspect_ratio);
         update_eye_directions();
     }
 }
 
-void camera_s::update_eye_directions() noexcept {
-    auto &[forward, up, right] = eye_d.transform.directions;
-    const auto &view_matrix = matrices.view_matrix;
+void Camera::update_projection_matrix() noexcept {
+    m_matrices.projection_matrix = compute_perspective_projection_old(m_settings.aspect_ratio,
+                                                                      m_eye_d.fov,
+                                                                      m_eye_d.near_clip,
+                                                                      m_eye_d.far_clip);
+    m_matrices.projection_matrix_flipped = flip_projection_matrix(m_matrices.projection_matrix);
+    m_matrices.projection_matrix_inverted = glm::inverse(m_matrices.projection_matrix);
+}
 
-    forward = glm::normalize(glm::f32vec3{view_matrix[0][2], view_matrix[1][2], view_matrix[2][2]});
-    right = glm::normalize(glm::f32vec3{view_matrix[0][0], view_matrix[1][0], view_matrix[2][0]});
+void Camera::update_view_matrix() noexcept {
+    m_matrices.view_matrix = compute_view_matrix_YXZ(m_eye_d.transform.position, m_eye_d.transform.orientation);
+    m_matrices.view_matrix_inverted = glm::inverse(m_matrices.view_matrix);
+}
+
+void Camera::update_eye_directions() noexcept {
+    auto &[forward, up, right] = m_eye_d.transform.directions;
+    const auto &view_matrix = m_matrices.view_matrix;
+
+    forward = glm::normalize(glm::f32vec3(view_matrix[0][2], view_matrix[1][2], view_matrix[2][2]));
+    right = glm::normalize(glm::f32vec3(view_matrix[0][0], view_matrix[1][0], view_matrix[2][0]));
     up = glm::cross(forward, right);
+}
+
+void Camera::set_position(const glm::f64vec3 &new_position) {
+    m_eye_d.transform.position = new_position;
+    update_view_matrix();
+}
+
+void Camera::set_orientation(const float degrees, const glm::f32vec3 &axis) noexcept {
+    const auto new_orientation = glm::angleAxis(glm::radians(degrees), axis);
+    set_orientation(glm::normalize(new_orientation * m_eye_d.transform.orientation));
+    update_view_matrix();
+    update_eye_directions();
+}
+
+void Camera::set_orientation(const glm::f64quat &new_orientation) noexcept {
+    m_eye_d.transform.orientation = new_orientation;
 }
 
 } // namespace sm::arcane::cameras

@@ -43,15 +43,41 @@ struct camera_eye_s {
     T far_clip;
 };
 
-struct camera_s {
-    camera_settings_s settings = {};
-    camera_eye_s<double> eye_d = {};
-    camera_matrices_s<double> matrices = {};
 
-    void update(float swapchain_aspect_ratio);
+class Camera {
+public:
+    explicit Camera() = delete;
+    explicit Camera(float swapchain_aspect_ratio);
+
+    Camera(const Camera &) = delete;
+    Camera &operator=(const Camera &) = delete;
+    Camera(Camera &&) noexcept = delete;
+    Camera &operator=(Camera &&) noexcept = delete;
+
+    ~Camera() = default;
+
+    [[nodiscard]] const camera_settings_s &settings() const { return m_settings; }
+    [[nodiscard]] const camera_eye_s<double> &eye_d() const { return m_eye_d; }
+    [[nodiscard]] const camera_matrices_s<double> &matrices() const { return m_matrices; }
+
+    void set_position(const glm::f64vec3 &new_position);
+    void set_orientation(float degrees, const glm::f32vec3 &axis) noexcept;
+    void set_orientation(const glm::f64quat &new_orientation) noexcept;
+
+    void loot_at(const glm::f64vec3 &target_position) noexcept;
+
+    void update();
 
 private:
     void update_eye_directions() noexcept;
+    void update_projection_matrix() noexcept;
+    void update_view_matrix() noexcept;
+
+    float m_swapchain_aspect_ratio;
+
+    camera_settings_s m_settings = {};
+    camera_eye_s<double> m_eye_d = {};
+    camera_matrices_s<double> m_matrices = {};
 };
 
 } // namespace sm::arcane::cameras

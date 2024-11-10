@@ -29,6 +29,8 @@ public:
     [[nodiscard]] const DeviceMemoryImage &depth_image() const noexcept { return m_depth_dm_image; }
     [[nodiscard]] vk::SurfaceKHR surface() const noexcept { return m_surface; }
     [[nodiscard]] vk::Extent2D extent() const noexcept { return m_extent; }
+    [[nodiscard]] float aspect_ratio() const noexcept;
+
     void revalue();
 
 private:

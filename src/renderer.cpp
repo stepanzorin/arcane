@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 
+#include <algorithm>
 #include <numeric>
 
 namespace sm::arcane {
@@ -20,21 +21,37 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
 }
 
 [[nodiscard]] cube_render_resources_s create_render_resources(const vulkan::Device &device,
-                                                              const vk::CommandPool command_pool) {
+                                                              const vk::CommandPool command_pool,
+                                                              cameras::Camera &camera) {
     auto descriptor_pool = make_descriptor_pool(device.device(), {{vk::DescriptorType::eUniformBuffer, 1}});
 
     auto pipeline = primitive_graphics::shaders::DynamicDrawMeshPipeline{device.device(),
                                                                          device.physical_device(),
                                                                          descriptor_pool,
                                                                          vk::Format::eB8G8R8A8Unorm,
-                                                                         vk::Format::eD32Sfloat};
+                                                                         vk::Format::eD32Sfloat,
+                                                                         camera};
 
     auto vertices = primitive_graphics::blanks::cube_vertices;
     auto indices = primitive_graphics::blanks::cube_indices;
 
+
+    camera.update();
+
     return {.descriptor_pool = std::move(descriptor_pool),
             .cube_mesh = primitive_graphics::Mesh{device, command_pool, std::move(vertices), std::move(indices)},
             .pipeline = std::move(pipeline)};
+}
+
+[[nodiscard]] std::array<frame_context_s, vulkan::g_max_frames_in_flight> create_frame_contexts(
+        const vk::raii::Device &device) noexcept {
+    std::array<frame_context_s, vulkan::g_max_frames_in_flight> frame_contexts;
+    for (auto &frame : frame_contexts) {
+        frame.image_available_semaphore = vk::raii::Semaphore{device, vk::SemaphoreCreateInfo{}};
+        frame.render_finished_semaphore = vk::raii::Semaphore{device, vk::SemaphoreCreateInfo{}};
+        frame.in_flight_fence = vk::raii::Fence{device, vk::FenceCreateInfo{}};
+    }
+    return frame_contexts;
 }
 
 } // namespace
@@ -45,13 +62,9 @@ Renderer::Renderer(vulkan::Device &device,
     : m_logger{std::move(renderer_logger)},
       m_device{device},
       m_swapchain{swapchain},
-      m_resources{create_render_resources(device, m_swapchain.command_pool())} {
-    for (auto &frame : m_frames) {
-        frame.image_available_semaphore = vk::raii::Semaphore{m_device.device(), vk::SemaphoreCreateInfo{}};
-        frame.render_finished_semaphore = vk::raii::Semaphore{m_device.device(), vk::SemaphoreCreateInfo{}};
-        frame.in_flight_fence = vk::raii::Fence{m_device.device(), vk::FenceCreateInfo{}};
-    }
-
+      m_camera{m_swapchain.aspect_ratio()},
+      m_resources{create_render_resources(device, m_swapchain.command_pool(), m_camera)},
+      m_frames{create_frame_contexts(device.device())} {
     build_command_buffer();
 }
 

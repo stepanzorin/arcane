@@ -66,14 +66,13 @@ private:
     vulkan::Device &m_device;
     const vulkan::Swapchain &m_swapchain;
 
+    cameras::Camera m_camera;
     cube_render_resources_s m_resources;
 
     frame_info_s m_current_frame_info{};
     prev_frame_info_s m_prev_frame_info{};
 
     std::array<frame_context_s, vulkan::g_max_frames_in_flight> m_frames{};
-
-    cameras::camera_s m_camera{};
 };
 
 } // namespace sm::arcane

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "cameras/camera.hpp"
+
+
 #include <cstddef>
 #include <cstdint>
 #include <tuple>
@@ -19,6 +22,9 @@
 #include "vulkan/device_memory.hpp"
 #include "vulkan/image_barriers.hpp"
 
+namespace sm::arcane::cameras {
+class Camera;
+}
 namespace sm::arcane::primitive_graphics::shaders {
 
 inline glm::mat4x4 create_model_view_projection_clip_matrix(vk::Extent2D const &extent) {
@@ -88,6 +94,26 @@ inline void update_descriptor_sets(
     device.updateDescriptorSets(writeDescriptorSets, nullptr);
 }
 
+struct global_ubo_s {
+    glm::f32mat4 projection{1.0f};
+    glm::f32mat4 view{1.0f};
+    glm::f32mat4 inverseView{1.0f};
+};
+
+[[nodiscard]] inline std::vector<vulkan::DeviceMemoryBuffer> create_global_ubos(
+        const vk::raii::PhysicalDevice &physical_device,
+        const vk::raii::Device &device) {
+    auto global_ubos = std::vector<vulkan::DeviceMemoryBuffer>{};
+    global_ubos.reserve(vulkan::g_max_frames_in_flight);
+    for (auto i = std::size_t{0}; i < vulkan::g_max_frames_in_flight; ++i) {
+        global_ubos.emplace_back(vulkan::DeviceMemoryBuffer{physical_device,
+                                                            device,
+                                                            vk::BufferUsageFlagBits::eUniformBuffer,
+                                                            sizeof(global_ubo_s)});
+    }
+    return global_ubos;
+}
+
 class DynamicDrawMeshPipeline {
 public:
     DynamicDrawMeshPipeline(const vk::raii::Device &device,
@@ -95,12 +121,10 @@ public:
                             const vk::raii::DescriptorPool &descriptor_pool,
                             const vk::Format color_format,
                             const vk::Format depth_format,
+                            cameras::Camera &camera,
                             const vk::Extent2D &surface_extent = {1600, 900})
         : m_device(device),
-          m_uniform_buffer{vulkan::DeviceMemoryBuffer{physical_device,
-                                                      device,
-                                                      vk::BufferUsageFlagBits::eUniformBuffer,
-                                                      sizeof(glm::f32mat4)}},
+          m_global_ubos{create_global_ubos(physical_device, device)},
           m_descriptor_set_layout{make_descriptor_set_layout(
                   device,
                   {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}})},
@@ -111,12 +135,14 @@ public:
           m_pipeline(nullptr),
           m_color_format(color_format),
           m_depth_format(depth_format) {
-        m_uniform_buffer.upload(create_model_view_projection_clip_matrix(surface_extent));
+        auto ubo = global_ubo_s{camera.matrices().projection_matrix, camera.matrices().view_matrix};
+
+        m_global_ubos[0].upload(ubo);
+
         update_descriptor_sets(device,
                                m_descriptor_set,
-                               {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer.buffer, VK_WHOLE_SIZE, nullptr}},
+                               {{vk::DescriptorType::eUniformBuffer, m_global_ubos[0].buffer, VK_WHOLE_SIZE, nullptr}},
                                nullptr);
-
 
         createPipeline(m_device);
     }
@@ -187,7 +213,7 @@ private:
 
         constexpr auto vertex_input_attributes = std::array{
                 vk::VertexInputAttributeDescription{0, 0, vk::Format::eR32G32B32Sfloat, 0},
-                vk::VertexInputAttributeDescription{1, 0, vk::Format::eR32G32B32A32Sfloat, 16}};
+                vk::VertexInputAttributeDescription{1, 0, vk::Format::eR32G32B32A32Sfloat, 12}};
 
         const auto vertex_input_info = vk::PipelineVertexInputStateCreateInfo{
                 {},
@@ -243,7 +269,7 @@ private:
 
     const vk::raii::Device &m_device;
 
-    vulkan::DeviceMemoryBuffer m_uniform_buffer;
+    std::vector<vulkan::DeviceMemoryBuffer> m_global_ubos;
     vk::raii::DescriptorSetLayout m_descriptor_set_layout;
     vk::raii::DescriptorSet m_descriptor_set;
 
