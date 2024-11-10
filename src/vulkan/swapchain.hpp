@@ -22,6 +22,7 @@ public:
 
     [[nodiscard]] vk::SwapchainKHR handle() const noexcept { return *m_swapchain; }
     [[nodiscard]] const vk::raii::SwapchainKHR &get() const noexcept { return m_swapchain; }
+    [[nodiscard]] const vk::raii::CommandPool &command_pool() const noexcept { return m_command_pool; }
     [[nodiscard]] const vk::raii::CommandBuffers &command_buffers() const noexcept { return m_command_buffers; }
     [[nodiscard]] const std::vector<vk::Image> &color_images() const noexcept { return m_images; }
     [[nodiscard]] const std::vector<vk::raii::ImageView> &color_image_views() const noexcept { return m_image_views; }
