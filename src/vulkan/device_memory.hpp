@@ -71,6 +71,39 @@ public:
 
         copy_to_memory(data, count, element_size);
     }
+
+    template<typename T>
+    void upload(const vk::raii::PhysicalDevice &physical_device,
+                const vk::raii::Device &device,
+                const vk::Queue queue,
+                const vk::CommandPool command_pool,
+                const std::vector<T> &data,
+                const std::size_t stride) {
+        assert(usages & vk::BufferUsageFlagBits::eTransferDst);
+        assert(property_flags & vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+        const auto element_size = stride ? stride : sizeof(T);
+        assert(sizeof(T) <= element_size);
+
+        const auto data_size = data.size() * element_size;
+        assert(data_size <= size);
+
+        auto staging_buffer = vulkan::DeviceMemoryBuffer{physical_device,
+                                                         device,
+                                                         vk::BufferUsageFlagBits::eTransferSrc,
+                                                         data_size};
+        staging_buffer.upload(data.data(), data.size(), element_size);
+
+        const auto command_buffer = vk::raii::CommandBuffer{std::move(
+                vk::raii::CommandBuffers{device, {command_pool, vk::CommandBufferLevel::ePrimary, 1}}.front())};
+        command_buffer.begin(vk::CommandBufferBeginInfo{vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+        command_buffer.copyBuffer(*staging_buffer.buffer, *buffer, vk::BufferCopy{0, 0, data_size});
+        command_buffer.end();
+
+        const auto submit_info = vk::SubmitInfo{nullptr, nullptr, *command_buffer};
+        queue.submit(submit_info, nullptr);
+        queue.waitIdle();
+    }
 };
 
 struct DeviceMemoryImage {
