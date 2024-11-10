@@ -1,6 +1,8 @@
 target_sources(
     arcane
     PRIVATE # cmake-format: sort
+            mesh.cpp
+            mesh.hpp
             primitives.hpp)
 
 # Shader part
