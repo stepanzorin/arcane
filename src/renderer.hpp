@@ -46,6 +46,9 @@ struct render_resources_s {
 // Temporary pipeline struct. Will remove the struct in the future
 struct cube_render_resources_s {
     vk::raii::DescriptorPool descriptor_pool;
+    std::vector<vulkan::DeviceMemoryBuffer> global_ubos;
+    vk::raii::DescriptorSetLayout global_descriptor_set_layout;
+    std::vector<vk::raii::DescriptorSet> global_descriptor_sets;
     primitive_graphics::Mesh cube_mesh;
     primitive_graphics::shaders::DynamicDrawMeshPipeline pipeline;
 };
@@ -56,7 +59,6 @@ public:
              const vulkan::Swapchain &swapchain,
              std::shared_ptr<spdlog::logger> renderer_logger);
 
-    void build_command_buffer();
     void begin_frame();
     void end_frame();
     void render();
@@ -65,6 +67,7 @@ private:
     std::shared_ptr<spdlog::logger> m_logger;
     vulkan::Device &m_device;
     const vulkan::Swapchain &m_swapchain;
+
 
     cameras::Camera m_camera;
     cube_render_resources_s m_resources;

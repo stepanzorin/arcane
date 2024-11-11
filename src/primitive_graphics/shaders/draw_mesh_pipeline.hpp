@@ -22,128 +22,20 @@
 #include "vulkan/device_memory.hpp"
 #include "vulkan/image_barriers.hpp"
 
-namespace sm::arcane::cameras {
-class Camera;
-}
 namespace sm::arcane::primitive_graphics::shaders {
-
-inline glm::mat4x4 create_model_view_projection_clip_matrix(vk::Extent2D const &extent) {
-    auto fov = glm::radians(30.0f);
-    if (extent.width > extent.height) {
-        fov *= static_cast<float>(extent.height) / static_cast<float>(extent.width);
-    }
-
-    const auto model = glm::mat4x4(1.0f);
-    const auto view = glm::lookAt(glm::f32vec3{-5.0f, 3.0f, -10.0f},
-                                  glm::f32vec3{0.0f, 0.0f, 0.0f},
-                                  glm::f32vec3{0.0f, -1.0f, 0.0f});
-    const auto projection = glm::perspective(fov, 1.0f, 0.1f, 100.0f);
-    // clang-format off
-    const auto clip = glm::f32mat4x4{ 1.0f,  0.0f, 0.0f, 0.0f,
-                                    0.0f, -1.0f, 0.0f, 0.0f,
-                                    0.0f,  0.0f, 0.5f, 0.0f,
-                                    0.0f,  0.0f, 0.5f, 1.0f };  // vulkan clip space has inverted y and half z !
-    // clang-format on
-    return clip * projection * view * model;
-}
-
-inline vk::raii::DescriptorSetLayout make_descriptor_set_layout(
-        const vk::raii::Device &device,
-        const std::vector<std::tuple<vk::DescriptorType, std::uint32_t, const vk::ShaderStageFlags>> &binding_data,
-        vk::DescriptorSetLayoutCreateFlags flags = {}) {
-    auto bindings = std::vector<vk::DescriptorSetLayoutBinding>(binding_data.size());
-    for (auto i = std::size_t{0}; i < binding_data.size(); ++i) {
-        bindings[i] = vk::DescriptorSetLayoutBinding(static_cast<std::uint32_t>(i),
-                                                     std::get<0>(binding_data[i]),
-                                                     std::get<1>(binding_data[i]),
-                                                     std::get<2>(binding_data[i]));
-    }
-    return {device, {flags, bindings}};
-}
-
-inline void update_descriptor_sets(
-        const vk::raii::Device &device,
-        const vk::raii::DescriptorSet &descriptor_set,
-        const std::vector<
-                std::tuple<vk::DescriptorType, const vk::raii::Buffer &, vk::DeviceSize, const vk::raii::BufferView *>>
-                &buffer_data,
-        std::nullptr_t,
-        const std::uint32_t binding_offset = 0) {
-    std::vector<vk::DescriptorBufferInfo> bufferInfos;
-    bufferInfos.reserve(buffer_data.size());
-
-    std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-    writeDescriptorSets.reserve(buffer_data.size());
-    std::uint32_t dstBinding = binding_offset;
-    for (auto const &bd : buffer_data) {
-        bufferInfos.emplace_back(std::get<1>(bd), 0, std::get<2>(bd));
-        vk::BufferView bufferView;
-        if (std::get<3>(bd)) {
-            bufferView = *std::get<3>(bd);
-        }
-        writeDescriptorSets.emplace_back(descriptor_set,
-                                         dstBinding++,
-                                         0,
-                                         1,
-                                         std::get<0>(bd),
-                                         nullptr,
-                                         &bufferInfos.back(),
-                                         std::get<3>(bd) ? &bufferView : nullptr);
-    }
-
-    device.updateDescriptorSets(writeDescriptorSets, nullptr);
-}
-
-struct global_ubo_s {
-    glm::f32mat4 projection{1.0f};
-    glm::f32mat4 view{1.0f};
-    glm::f32mat4 inverseView{1.0f};
-};
-
-[[nodiscard]] inline std::vector<vulkan::DeviceMemoryBuffer> create_global_ubos(
-        const vk::raii::PhysicalDevice &physical_device,
-        const vk::raii::Device &device) {
-    auto global_ubos = std::vector<vulkan::DeviceMemoryBuffer>{};
-    global_ubos.reserve(vulkan::g_max_frames_in_flight);
-    for (auto i = std::size_t{0}; i < vulkan::g_max_frames_in_flight; ++i) {
-        global_ubos.emplace_back(vulkan::DeviceMemoryBuffer{physical_device,
-                                                            device,
-                                                            vk::BufferUsageFlagBits::eUniformBuffer,
-                                                            sizeof(global_ubo_s)});
-    }
-    return global_ubos;
-}
 
 class DynamicDrawMeshPipeline {
 public:
     DynamicDrawMeshPipeline(const vk::raii::Device &device,
-                            const vk::raii::PhysicalDevice &physical_device,
-                            const vk::raii::DescriptorPool &descriptor_pool,
+                            const vk::DescriptorSetLayout descriptor_set_layout,
                             const vk::Format color_format,
-                            const vk::Format depth_format,
-                            cameras::Camera &camera,
-                            const vk::Extent2D &surface_extent = {1600, 900})
+                            const vk::Format depth_format)
         : m_device(device),
-          m_global_ubos{create_global_ubos(physical_device, device)},
-          m_descriptor_set_layout{make_descriptor_set_layout(
-                  device,
-                  {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}})},
-          m_descriptor_set{
-                  std::move(vk::raii::DescriptorSets(device, {descriptor_pool, *m_descriptor_set_layout}).front())},
-          m_pipeline_layout(vk::raii::PipelineLayout(m_device, {{}, *m_descriptor_set_layout})),
+          m_pipeline_layout(vk::raii::PipelineLayout(m_device, {{}, descriptor_set_layout})),
           m_pipeline_cache{m_device, vk::PipelineCacheCreateInfo{}},
           m_pipeline(nullptr),
           m_color_format(color_format),
           m_depth_format(depth_format) {
-        auto ubo = global_ubo_s{camera.matrices().projection_matrix, camera.matrices().view_matrix};
-
-        m_global_ubos[0].upload(ubo);
-
-        update_descriptor_sets(device,
-                               m_descriptor_set,
-                               {{vk::DescriptorType::eUniformBuffer, m_global_ubos[0].buffer, VK_WHOLE_SIZE, nullptr}},
-                               nullptr);
-
         createPipeline(m_device);
     }
 
@@ -151,7 +43,6 @@ public:
 
     [[nodiscard]] const vk::raii::Pipeline &handle() { return m_pipeline; }
     [[nodiscard]] const vk::raii::PipelineLayout &layout() { return m_pipeline_layout; }
-    [[nodiscard]] const vk::raii::DescriptorSet &desc_set() { return m_descriptor_set; }
 
     DynamicDrawMeshPipeline(DynamicDrawMeshPipeline &&other) noexcept = default;
 
@@ -268,10 +159,6 @@ private:
     }
 
     const vk::raii::Device &m_device;
-
-    std::vector<vulkan::DeviceMemoryBuffer> m_global_ubos;
-    vk::raii::DescriptorSetLayout m_descriptor_set_layout;
-    vk::raii::DescriptorSet m_descriptor_set;
 
     vk::raii::PipelineLayout m_pipeline_layout;
     vk::raii::PipelineCache m_pipeline_cache;
