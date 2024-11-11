@@ -27,15 +27,6 @@ struct transform_s : pose_s {
 };
 
 struct transform_object_s : transform_s {
-private:
-    struct matrices_s {
-        glm::f64mat4 model_matrix = glm::f64mat4{1.0};
-        glm::f32mat4 normal_matrix = glm::f64mat4{1.0};
-    };
-
-    matrices_s matrices;
-
-public:
     glm::f32vec3 scale = {1.0f, 1.0f, 1.0f};
 
     [[nodiscard]] glm::f64mat4 model_matrix() const noexcept;
