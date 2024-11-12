@@ -25,6 +25,8 @@ public:
     [[nodiscard]] const vk::raii::CommandPool &command_pool() const noexcept { return m_command_pool; }
     [[nodiscard]] const vk::raii::CommandBuffers &command_buffers() const noexcept { return m_command_buffers; }
     [[nodiscard]] const std::vector<vk::Image> &color_images() const noexcept { return m_images; }
+    [[nodiscard]] vk::Format color_format() const noexcept { return m_color_format; }
+    [[nodiscard]] vk::Format depth_format() const noexcept { return m_depth_dm_image.format; }
     [[nodiscard]] const std::vector<vk::raii::ImageView> &color_image_views() const noexcept { return m_image_views; }
     [[nodiscard]] const DeviceMemoryImage &depth_image() const noexcept { return m_depth_dm_image; }
     [[nodiscard]] vk::SurfaceKHR surface() const noexcept { return m_surface; }
