@@ -1,7 +1,13 @@
 #include "renderer.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <numeric>
+#include <tuple>
+#include <utility>
+
+#include "render/common.hpp"
 
 namespace sm::arcane {
 
@@ -106,25 +112,20 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
 
     auto global_ubos = create_global_ubos(device.physical_device(), device.device());
 
-    auto pipeline = primitive_graphics::shaders::DynamicDrawMeshPipeline{device.device(),
-                                                                         *global_descriptor_set_layout,
-                                                                         vk::Format::eB8G8R8A8Unorm,
-                                                                         vk::Format::eD32Sfloat};
     auto vertices = primitive_graphics::blanks::cube_vertices;
     auto indices = primitive_graphics::blanks::cube_indices;
 
     return cube_render_resources_s{
-            .descriptor_pool = std::move(global_descriptor_pool),
+            .global_descriptor_pool = std::move(global_descriptor_pool),
             .global_ubos = std::move(global_ubos),
             .global_descriptor_set_layout = std::move(global_descriptor_set_layout),
             .global_descriptor_sets = std::move(global_descriptor_sets),
-            .cube_mesh = primitive_graphics::Mesh{device, command_pool, std::move(vertices), std::move(indices)},
-            .pipeline = std::move(pipeline)};
+            .cube_mesh = primitive_graphics::Mesh{device, command_pool, std::move(vertices), std::move(indices)}};
 }
 
-[[nodiscard]] std::array<frame_context_s, vulkan::g_max_frames_in_flight> create_frame_contexts(
+[[nodiscard]] std::array<render::frame_context_s, vulkan::g_max_frames_in_flight> create_frame_contexts(
         const vk::raii::Device &device) noexcept {
-    auto frame_contexts = std::array<frame_context_s, vulkan::g_max_frames_in_flight>{};
+    auto frame_contexts = std::array<render::frame_context_s, vulkan::g_max_frames_in_flight>{};
     for (auto &frame : frame_contexts) {
         frame.image_available_semaphore = vk::raii::Semaphore{device, vk::SemaphoreCreateInfo{}};
         frame.render_finished_semaphore = vk::raii::Semaphore{device, vk::SemaphoreCreateInfo{}};
@@ -143,23 +144,8 @@ Renderer::Renderer(vulkan::Device &device,
       m_swapchain{swapchain},
       m_camera{m_swapchain.aspect_ratio()},
       m_resources{create_render_resources(device, m_swapchain.command_pool())},
-      m_frames{create_frame_contexts(device.device())} {}
-
-constexpr auto color_subresource_range = vk::ImageSubresourceRange{
-        vk::ImageAspectFlagBits::eColor,
-        0,
-        vk::RemainingMipLevels,
-        0,
-        vk::RemainingArrayLayers,
-};
-
-constexpr auto depth_subresource_range = vk::ImageSubresourceRange{
-        vk::ImageAspectFlagBits::eDepth,
-        0,
-        vk::RemainingMipLevels,
-        0,
-        vk::RemainingArrayLayers,
-};
+      m_frames{create_frame_contexts(device.device())},
+      m_wireframe_pass{device, m_swapchain, m_current_frame_info, m_resources.global_descriptor_set_layout} {}
 
 void Renderer::begin_frame() {
     auto &current_frame = m_frames[m_current_frame_info.frame_index];
@@ -178,11 +164,15 @@ void Renderer::begin_frame() {
     m_current_frame_info.image_index = image_index;
 
     m_current_frame_info.started_time = std::chrono::steady_clock::now();
+
+    m_swapchain.command_buffers()[m_current_frame_info.image_index].begin(vk::CommandBufferBeginInfo{});
 }
 
 void Renderer::end_frame() {
     const auto &current_frame = m_frames[m_current_frame_info.frame_index];
     const auto &command_buffer = m_swapchain.command_buffers()[m_current_frame_info.image_index];
+
+    command_buffer.end();
 
     constexpr auto wait_stages = vk::PipelineStageFlags{vk::PipelineStageFlagBits::eColorAttachmentOutput};
 
@@ -226,85 +216,10 @@ void Renderer::end_frame() {
 void Renderer::render() {
     begin_frame();
 
-    const auto &command_buffer = m_swapchain.command_buffers()[m_current_frame_info.image_index];
-
-    const auto extent = m_swapchain.extent();
-    const auto &swapchain_color_image = m_swapchain.color_images()[m_current_frame_info.image_index];
-    const auto &swapchain_color_image_view = m_swapchain.color_image_views()[m_current_frame_info.image_index];
-    const auto &swapchain_depth_image = m_swapchain.depth_image().image;
-    const auto &swapchain_depth_image_view = m_swapchain.depth_image().image_view;
-
-    auto clear_values = std::array<vk::ClearValue, 2>{};
-    clear_values[0].color = vk::ClearColorValue(std::array{0.2f, 0.2f, 0.2f, 0.2f});
-    clear_values[1].depthStencil = vk::ClearDepthStencilValue{1.0f, 0};
-
-    command_buffer.begin(vk::CommandBufferBeginInfo{});
-
-    vulkan::image_layout_transition(*command_buffer,
-                                    swapchain_color_image,
-                                    vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                    vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                    vk::AccessFlagBits::eNone,
-                                    vk::AccessFlagBits::eColorAttachmentWrite,
-                                    vk::ImageLayout::eUndefined,
-                                    vk::ImageLayout::eColorAttachmentOptimal,
-                                    color_subresource_range);
-
-    vulkan::image_layout_transition(*command_buffer,
-                                    *swapchain_depth_image,
-                                    vk::ImageLayout::eUndefined,
-                                    vk::ImageLayout::eDepthAttachmentOptimal,
-                                    depth_subresource_range);
-
-    const auto color_attachment = vk::RenderingAttachmentInfoKHR{swapchain_color_image_view,
-                                                                 vk::ImageLayout::eColorAttachmentOptimal,
-                                                                 vk::ResolveModeFlagBits::eNone,
-                                                                 {},
-                                                                 {},
-                                                                 vk::AttachmentLoadOp::eClear,
-                                                                 vk::AttachmentStoreOp::eStore,
-                                                                 clear_values[0]};
-
-    const auto depth_attachment = vk::RenderingAttachmentInfoKHR{swapchain_depth_image_view,
-                                                                 vk::ImageLayout::eDepthAttachmentOptimal,
-                                                                 vk::ResolveModeFlagBits::eNone,
-                                                                 {},
-                                                                 {},
-                                                                 vk::AttachmentLoadOp::eClear,
-                                                                 vk::AttachmentStoreOp::eDontCare,
-                                                                 clear_values[1]};
-
-    const auto rendering_info = vk::RenderingInfoKHR{
-            {},
-            vk::Rect2D{{0, 0}, extent},
-            1,
-            0,
-            1,
-            &color_attachment,
-            &depth_attachment,
-            nullptr // TODO: is_depth_only_format() pStencilAttachment
-    };
-
-    command_buffer.beginRendering(rendering_info);
-
-    const auto viewport = vk::Viewport{0.0f,
-                                       0.0f,
-                                       static_cast<float>(extent.width),
-                                       static_cast<float>(extent.height),
-                                       0.0f,
-                                       1.0f};
-    command_buffer.setViewport(0, viewport);
-
-    const auto scissor = vk::Rect2D{{0, 0}, extent};
-    command_buffer.setScissor(0, scissor);
-
-    command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_resources.pipeline.handle());
-
-
     m_camera.update();
 
-    auto ubo = global_ubo_s{m_camera.matrices().projection_matrix, m_camera.matrices().view_matrix};
-    m_resources.global_ubos[m_current_frame_info.frame_index].upload(ubo);
+    m_resources.global_ubos[m_current_frame_info.frame_index].upload(
+            global_ubo_s{m_camera.matrices().projection_matrix, m_camera.matrices().view_matrix});
     update_descriptor_sets(m_device.device(),
                            m_resources.global_descriptor_sets[m_current_frame_info.frame_index],
                            {{vk::DescriptorType::eUniformBuffer,
@@ -313,24 +228,24 @@ void Renderer::render() {
                              nullptr}},
                            nullptr);
 
-    command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                      *m_resources.pipeline.layout(),
-                                      0,
-                                      {*m_resources.global_descriptor_sets[m_current_frame_info.frame_index]},
-                                      nullptr);
+    const auto &command_buffer = m_swapchain.command_buffers()[m_current_frame_info.image_index];
 
-    m_resources.cube_mesh.bind(*command_buffer);
-    m_resources.cube_mesh.draw(*command_buffer);
+    {
+        m_wireframe_pass.begin(command_buffer);
 
-    command_buffer.endRendering();
+        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_wireframe_pass.draw_mesh_pipeline().handle());
 
-    vulkan::image_layout_transition(*command_buffer,
-                                    swapchain_color_image,
-                                    vk::ImageLayout::eColorAttachmentOptimal,
-                                    vk::ImageLayout::ePresentSrcKHR,
-                                    color_subresource_range);
+        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                          *m_wireframe_pass.draw_mesh_pipeline().layout(),
+                                          0,
+                                          {*m_resources.global_descriptor_sets[m_current_frame_info.frame_index]},
+                                          nullptr);
 
-    command_buffer.end();
+        m_resources.cube_mesh.bind(*command_buffer);
+        m_resources.cube_mesh.draw(*command_buffer);
+
+        m_wireframe_pass.end(command_buffer);
+    }
 
     end_frame();
 }
