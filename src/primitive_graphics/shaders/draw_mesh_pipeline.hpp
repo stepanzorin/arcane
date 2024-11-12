@@ -1,25 +1,11 @@
 #pragma once
 
-#include "cameras/camera.hpp"
-
-
-#include <cstddef>
 #include <cstdint>
-#include <tuple>
-#include <vector>
-
-#include <glm/fwd.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
 
 #include <vulkan/vulkan_raii.hpp>
 
 #include "common/shaders/pipeline_functions.hpp"
 #include "primitive_graphics/mesh.hpp"
-#include "vulkan/device.hpp"
-#include "vulkan/device_memory.hpp"
 #include "vulkan/image_barriers.hpp"
 
 namespace sm::arcane::primitive_graphics::shaders {
@@ -41,8 +27,8 @@ public:
 
     ~DynamicDrawMeshPipeline() = default;
 
-    [[nodiscard]] const vk::raii::Pipeline &handle() { return m_pipeline; }
-    [[nodiscard]] const vk::raii::PipelineLayout &layout() { return m_pipeline_layout; }
+    [[nodiscard]] const vk::raii::Pipeline &handle() const noexcept { return m_pipeline; }
+    [[nodiscard]] const vk::raii::PipelineLayout &layout() const noexcept { return m_pipeline_layout; }
 
     DynamicDrawMeshPipeline(DynamicDrawMeshPipeline &&other) noexcept = default;
 
