@@ -1,5 +1,5 @@
 // Arcane (https://github.com/stepanzorin/arcane)
-// Copyright Text: 2023-2024 Stepan Zorin <stz.hom@gmail.com>
+// Copyright Text: 2024 Stepan Zorin <stz.hom@gmail.com>
 
 #pragma once
 
