@@ -5,10 +5,11 @@
 #include <string_view>
 #include <utility>
 
+#include <fmt/format.h>
 #define GLFW_INCLUDE_VULKAN
 #include <glfw/glfw3.h>
-#include <spdlog/spdlog.h>
 
+#include "peripherals.hpp"
 #include "window.hpp"
 
 namespace sm::arcane {
@@ -117,6 +118,9 @@ public:
           m_monitor_ptr{detect_monitor()},
           m_window_ptr{create_window(m_monitor_ptr, m_title, m_config)} {
         glfwSetWindowUserPointer(m_window_ptr, this);
+        glfwSetKeyCallback(m_window_ptr, keyboard_callback);
+        glfwSetCursorPosCallback(m_window_ptr, mouse_movement_callback);
+        glfwSetMouseButtonCallback(m_window_ptr, mouse_button_callback);
     }
 
     [[nodiscard]] required_instance_extensions_s required_instance_extensions() const noexcept {
@@ -141,15 +145,82 @@ public:
         return surface;
     }
 
+    [[nodiscard]] bool is_key_pressed(const keyboard_key_e key) const noexcept {
+        return m_keyboard.keys[std::to_underlying(key)];
+    }
+
+    [[nodiscard]] bool is_key_released(const keyboard_key_e key) const noexcept {
+        return !m_keyboard.keys[std::to_underlying(key)];
+    }
+
     ~Impl() override { glfwDestroyWindow(m_window_ptr); }
 
 private:
+    static void keyboard_callback(GLFWwindow *window,
+                                  std::int32_t key,
+                                  std::int32_t,
+                                  std::int32_t action,
+                                  std::int32_t mods);
+    static void mouse_movement_callback(GLFWwindow *window, double xpos, double ypos);
+    static void mouse_button_callback(GLFWwindow *window, std::int32_t button, std::int32_t action, std::int32_t mods);
+
     std::string_view m_title;
     window_config_s m_config;
 
     GLFWmonitor *m_monitor_ptr = nullptr;
     GLFWwindow *m_window_ptr = nullptr;
+
+    mutable mouse_s m_mouse;
+    mutable keyboard_s m_keyboard;
 };
+
+void Window::Impl::keyboard_callback(GLFWwindow *window,
+                                     const std::int32_t key,
+                                     const std::int32_t /*scancode*/,
+                                     const std::int32_t action,
+                                     const std::int32_t mods) {
+    const auto *wnd = static_cast<Window::Impl *>(glfwGetWindowUserPointer(window));
+
+    if (key >= 0 && key <= GLFW_KEY_LAST) {
+        if (action == GLFW_PRESS) {
+            wnd->m_keyboard.keys[key] = true;
+            wnd->m_keyboard.last_pressed_key_code = key;
+        } else if (action == GLFW_RELEASE) {
+            wnd->m_keyboard.keys[key] = false;
+        }
+
+        wnd->m_keyboard.shift_pressed = static_cast<std::uint32_t>(mods) & GLFW_MOD_SHIFT;
+        wnd->m_keyboard.ctrl_pressed = static_cast<std::uint32_t>(mods) & GLFW_MOD_CONTROL;
+        wnd->m_keyboard.alt_pressed = static_cast<std::uint32_t>(mods) & GLFW_MOD_ALT;
+    }
+}
+
+void Window::Impl::mouse_movement_callback(GLFWwindow *window, const double xpos, const double ypos) {
+    const auto *wnd = static_cast<Window::Impl *>(glfwGetWindowUserPointer(window));
+
+    wnd->m_mouse.dx = xpos - wnd->m_mouse.last_x_position;
+    wnd->m_mouse.dy = wnd->m_mouse.last_y_position - ypos;
+
+    wnd->m_mouse.last_x_position = xpos;
+    wnd->m_mouse.last_y_position = ypos;
+}
+
+void Window::Impl::mouse_button_callback(GLFWwindow *window,
+                                         const std::int32_t button,
+                                         const std::int32_t action,
+                                         const std::int32_t /*mods*/) {
+    auto *wnd = static_cast<Window::Impl *>(glfwGetWindowUserPointer(window));
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            wnd->m_mouse.left_button_pressed = true;
+        } else if (action == GLFW_RELEASE) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            wnd->m_mouse.left_button_pressed = false;
+        }
+    }
+}
 
 Window::Window(const app_config_s &config) : m_pimpl(std::make_unique<Impl>(config)) {}
 
@@ -166,6 +237,10 @@ window_extent_s Window::extent() const noexcept { return m_pimpl->extent(); }
 void Window::pool_events() const noexcept { m_pimpl->pool_events(); }
 
 VkSurfaceKHR Window::create_surface(const VkInstance &instance) const { return m_pimpl->create_surface(instance); }
+
+bool Window::is_key_pressed(const keyboard_key_e key) const noexcept { return m_pimpl->is_key_pressed(key); }
+
+bool Window::is_key_released(const keyboard_key_e key) const noexcept { return m_pimpl->is_key_released(key); }
 
 Window::~Window() = default;
 
