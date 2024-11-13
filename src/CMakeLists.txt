@@ -14,6 +14,7 @@ target_sources(
             application.hpp
             main.cpp
             os.h
+            peripherals.hpp
             renderer.cpp
             renderer.hpp
             window.cpp
