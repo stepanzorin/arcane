@@ -11,6 +11,10 @@
 
 namespace sm::arcane::cameras {
 
+enum class movement_direction_e { forward, backward, left, right, up, down };
+
+enum class rotation_direction_e { forward, backward, left, right };
+
 struct pose_s {
     glm::f64vec3 position = {0.0, 0.0, 0.0};
     glm::f32quat orientation = {0.0f, 0.0f, 0.0f, 0.0f};
