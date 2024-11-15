@@ -142,7 +142,6 @@ Renderer::Renderer(vulkan::Device &device,
     : m_logger{std::move(renderer_logger)},
       m_device{device},
       m_swapchain{swapchain},
-      m_camera{m_swapchain.aspect_ratio()},
       m_resources{create_render_resources(device, m_swapchain.command_pool())},
       m_frames{create_frame_contexts(device.device())},
       m_wireframe_pass{device, m_swapchain, m_current_frame_info, m_resources.global_descriptor_set_layout} {}
@@ -213,13 +212,12 @@ void Renderer::end_frame() {
     m_current_frame_info.frame_index = (m_current_frame_info.frame_index + 1) % vulkan::g_max_frames_in_flight;
 }
 
-void Renderer::render() {
+void Renderer::render(const render_args_s args) {
     begin_frame();
-
-    m_camera.update();
+    const auto &camera = args.scene.camera();
 
     m_resources.global_ubos[m_current_frame_info.frame_index].upload(
-            global_ubo_s{m_camera.matrices().projection_matrix, m_camera.matrices().view_matrix});
+            global_ubo_s{camera.matrices().projection_matrix, camera.matrices().view_matrix});
     update_descriptor_sets(m_device.device(),
                            m_resources.global_descriptor_sets[m_current_frame_info.frame_index],
                            {{vk::DescriptorType::eUniformBuffer,

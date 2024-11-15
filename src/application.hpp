@@ -11,6 +11,7 @@
 
 #include "app_config.hpp"
 #include "renderer.hpp"
+#include "scene/scene.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/instance.hpp"
 #include "vulkan/swapchain.hpp"
@@ -52,6 +53,8 @@ private:
     std::unique_ptr<vulkan::Swapchain> m_swapchain_uptr;
 
     Renderer m_renderer;
+
+    std::optional<scene::Scene> m_scene;
 };
 
 } // namespace sm::arcane

@@ -13,6 +13,7 @@
 #include "cameras/camera.hpp"
 #include "primitive_graphics/mesh.hpp"
 #include "render/passes/wireframe.hpp"
+#include "scene/scene.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/swapchain.hpp"
 
@@ -27,6 +28,10 @@ struct cube_render_resources_s {
     primitive_graphics::Mesh cube_mesh;
 };
 
+struct render_args_s {
+    scene::Scene &scene;
+};
+
 class Renderer {
 public:
     Renderer(vulkan::Device &device,
@@ -35,14 +40,15 @@ public:
 
     void begin_frame();
     void end_frame();
-    void render();
+    void render(render_args_s args);
+
+    [[nodiscard]] const render::frame_info_s &frame_info() const noexcept { return m_current_frame_info; }
 
 private:
     std::shared_ptr<spdlog::logger> m_logger;
     vulkan::Device &m_device;
     const vulkan::Swapchain &m_swapchain;
 
-    cameras::Camera m_camera;
     cube_render_resources_s m_resources;
 
     render::frame_info_s m_current_frame_info{};

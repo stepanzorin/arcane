@@ -64,6 +64,8 @@ public:
     void set_orientation(float degrees, const glm::f32vec3 &axis) noexcept;
     void set_orientation(const glm::f64quat &new_orientation) noexcept;
 
+    void move(movement_direction_e direction, float dt) noexcept;
+
     void loot_at(const glm::f64vec3 &target_position) noexcept;
 
     void update();

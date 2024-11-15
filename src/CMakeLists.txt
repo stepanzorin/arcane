@@ -2,6 +2,7 @@ add_subdirectory(cameras)
 add_subdirectory(common)
 add_subdirectory(primitive_graphics)
 add_subdirectory(render)
+add_subdirectory(scene)
 add_subdirectory(util)
 add_subdirectory(vulkan)
 

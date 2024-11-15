@@ -189,4 +189,40 @@ void Camera::set_orientation(const glm::f64quat &new_orientation) noexcept {
     m_eye_d.transform.orientation = new_orientation;
 }
 
+void Camera::move(const movement_direction_e direction, const float dt) noexcept {
+    auto move_direction = glm::f32vec3{};
+
+    const auto &[forward, up, right] = m_eye_d.transform.directions;
+
+    if (direction == movement_direction_e::forward) {
+        move_direction += forward;
+    }
+
+    if (direction == movement_direction_e::backward) {
+        move_direction -= forward;
+    }
+
+    if (direction == movement_direction_e::up) {
+        move_direction -= up;
+    }
+
+    if (direction == movement_direction_e::down) {
+        move_direction += up;
+    }
+
+    if (direction == movement_direction_e::left) {
+        move_direction -= right;
+    }
+
+    if (direction == movement_direction_e::right) {
+        move_direction += right;
+    }
+
+    move_direction *= m_settings.movement_speed;
+    const auto new_position = m_eye_d.transform.position +
+                              static_cast<glm::f64vec3>(move_direction) * static_cast<double>(dt);
+
+    set_position(new_position);
+}
+
 } // namespace sm::arcane::cameras
