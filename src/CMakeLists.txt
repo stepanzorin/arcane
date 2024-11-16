@@ -13,6 +13,7 @@ target_sources(
             app_config.hpp
             application.cpp
             application.hpp
+            frame.hpp
             main.cpp
             os.h
             peripherals.hpp
