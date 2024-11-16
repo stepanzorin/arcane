@@ -1,12 +1,5 @@
 #include "application.hpp"
 
-#include <memory>
-
-#include <spdlog/spdlog.h>
-
-#include "primitive_graphics/shaders/draw_mesh_pipeline.hpp"
-#include "vulkan/device_memory.hpp"
-
 namespace sm::arcane {
 
 Application::Application(const app_config_s &config)
@@ -17,7 +10,7 @@ Application::Application(const app_config_s &config)
       m_device{m_instance.handle(), m_surface},
       m_swapchain_uptr{create_swapchain()},
       m_renderer{m_device, *m_swapchain_uptr, m_logger->clone("renderer")},
-      m_scene{std::make_optional<scene::Scene>(m_window, m_renderer.frame_info(), m_swapchain_uptr->aspect_ratio())} {}
+      m_scene{std::make_optional<scene::Scene>(m_window, m_device, m_swapchain_uptr->aspect_ratio())} {}
 
 void Application::run() {
     while (!m_window.should_close()) {

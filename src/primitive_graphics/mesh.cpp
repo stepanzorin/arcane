@@ -10,13 +10,10 @@ template<typename T>
                                                           const std::vector<T> &data,
                                                           const vk::BufferUsageFlags usages) {
     const vk::DeviceSize buffer_size = sizeof(T) * data.size();
-
-    auto buffer = vulkan::DeviceMemoryBuffer{device.physical_device(),
-                                             device.device(),
-                                             usages | vk::BufferUsageFlagBits::eTransferDst,
-                                             buffer_size,
-                                             0,
-                                             vk::MemoryPropertyFlagBits::eDeviceLocal};
+    auto buffer = device.create_device_memory_buffer(usages | vk::BufferUsageFlagBits::eTransferDst,
+                                                     buffer_size,
+                                                     0,
+                                                     vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     buffer.upload(device.physical_device(),
                   device.device(),

@@ -4,25 +4,25 @@
 #pragma once
 
 #include "cameras/camera.hpp"
-#include "render/common.hpp"
+#include "vulkan/device.hpp"
 #include "window.hpp"
 
 namespace sm::arcane::scene {
 
 class Scene {
 public:
-    explicit Scene(const Window &window, const render::frame_info_s &frame_info, const float swapchain_aspect_ratio);
-
+    explicit Scene(const Window &window, const vulkan::Device &device, float swapchain_aspect_ratio);
 
     [[nodiscard]] cameras::Camera &camera();
 
     void update();
 
+private:
     void update_camera_state();
 
-private:
     const Window &m_window;
-    const render::frame_info_s &m_frame_info;
+    const vulkan::Device &m_device;
+
     cameras::Camera m_camera;
 };
 

@@ -1,13 +1,12 @@
 #include "renderer.hpp"
 
-#include <algorithm>
+#include <chrono>
 #include <cstddef>
-#include <cstdint>
+#include <limits>
 #include <numeric>
+#include <stdexcept>
 #include <tuple>
 #include <utility>
-
-#include "render/common.hpp"
 
 namespace sm::arcane {
 
@@ -66,12 +65,12 @@ struct global_ubo_s {
     glm::f32mat4 inverseView{1.0f};
 };
 
-[[nodiscard]] inline std::vector<vulkan::DeviceMemoryBuffer> create_global_ubos(
+[[nodiscard]] std::vector<vulkan::DeviceMemoryBuffer> create_global_ubos(
         const vk::raii::PhysicalDevice &physical_device,
         const vk::raii::Device &device) {
     auto global_ubos = std::vector<vulkan::DeviceMemoryBuffer>{};
-    global_ubos.reserve(vulkan::g_max_frames_in_flight);
-    for (auto i = std::size_t{0}; i < vulkan::g_max_frames_in_flight; ++i) {
+    global_ubos.reserve(g_max_frames_in_flight);
+    for (auto i = std::size_t{0}; i < g_max_frames_in_flight; ++i) {
         global_ubos.emplace_back(vulkan::DeviceMemoryBuffer{physical_device,
                                                             device,
                                                             vk::BufferUsageFlagBits::eUniformBuffer,
@@ -95,16 +94,14 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
 
 [[nodiscard]] cube_render_resources_s create_render_resources(const vulkan::Device &device,
                                                               const vk::CommandPool command_pool) {
-    auto global_descriptor_pool = make_descriptor_pool(
-            device.device(),
-            {{vk::DescriptorType::eUniformBuffer, vulkan::g_max_frames_in_flight}});
+    auto global_descriptor_pool = make_descriptor_pool(device.device(),
+                                                       {{vk::DescriptorType::eUniformBuffer, g_max_frames_in_flight}});
 
     auto global_descriptor_set_layout = make_descriptor_set_layout(
             device.device(),
             {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}});
 
-    const auto layouts = std::vector<vk::DescriptorSetLayout>{vulkan::g_max_frames_in_flight,
-                                                              *global_descriptor_set_layout};
+    const auto layouts = std::vector<vk::DescriptorSetLayout>{g_max_frames_in_flight, *global_descriptor_set_layout};
     const auto global_desc_set_alloc_info = vk::DescriptorSetAllocateInfo{*global_descriptor_pool,
                                                                           static_cast<std::uint32_t>(layouts.size()),
                                                                           layouts.data()};
@@ -123,17 +120,6 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
             .cube_mesh = primitive_graphics::Mesh{device, command_pool, std::move(vertices), std::move(indices)}};
 }
 
-[[nodiscard]] std::array<render::frame_context_s, vulkan::g_max_frames_in_flight> create_frame_contexts(
-        const vk::raii::Device &device) noexcept {
-    auto frame_contexts = std::array<render::frame_context_s, vulkan::g_max_frames_in_flight>{};
-    for (auto &frame : frame_contexts) {
-        frame.image_available_semaphore = vk::raii::Semaphore{device, vk::SemaphoreCreateInfo{}};
-        frame.render_finished_semaphore = vk::raii::Semaphore{device, vk::SemaphoreCreateInfo{}};
-        frame.in_flight_fence = vk::raii::Fence{device, vk::FenceCreateInfo{}};
-    }
-    return frame_contexts;
-}
-
 } // namespace
 
 Renderer::Renderer(vulkan::Device &device,
@@ -142,74 +128,62 @@ Renderer::Renderer(vulkan::Device &device,
     : m_logger{std::move(renderer_logger)},
       m_device{device},
       m_swapchain{swapchain},
-      m_resources{create_render_resources(device, m_swapchain.command_pool())},
-      m_frames{create_frame_contexts(device.device())},
+      m_resources{create_render_resources(m_device, m_swapchain.command_pool())},
+      m_current_frame_info{m_device.frame_info()},
+      m_frame_syncs{[&] {
+          auto frame_syncs = std::array<Renderer::frame_sync_s, g_max_frames_in_flight>{};
+          for (auto &sync : frame_syncs) {
+              sync.semaphores.image_available = vk::raii::Semaphore{m_device.device(), vk::SemaphoreCreateInfo{}};
+              sync.semaphores.render_finished = vk::raii::Semaphore{m_device.device(), vk::SemaphoreCreateInfo{}};
+              sync.fences.in_flight = vk::raii::Fence{m_device.device(), vk::FenceCreateInfo{}};
+          }
+          return frame_syncs;
+      }()},
       m_wireframe_pass{device, m_swapchain, m_current_frame_info, m_resources.global_descriptor_set_layout} {}
 
 void Renderer::begin_frame() {
-    auto &current_frame = m_frames[m_current_frame_info.frame_index];
-
-    auto [result, image_index] = m_swapchain.get().acquireNextImage(std::numeric_limits<uint64_t>::max(),
-                                                                    *current_frame.image_available_semaphore,
-                                                                    nullptr);
-    assert(image_index < m_swapchain.color_images().size());
-    if (result == vk::Result::eErrorOutOfDateKHR) {
-        return;
-    }
-    if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
-        throw std::runtime_error("Failed to acquire swapchain image!");
-    }
-
-    m_current_frame_info.image_index = image_index;
-
+    m_swapchain.acquire_next_image(*m_frame_syncs[m_current_frame_info.frame_index].semaphores.image_available);
     m_current_frame_info.started_time = std::chrono::steady_clock::now();
-
     m_swapchain.command_buffers()[m_current_frame_info.image_index].begin(vk::CommandBufferBeginInfo{});
 }
 
 void Renderer::end_frame() {
-    const auto &current_frame = m_frames[m_current_frame_info.frame_index];
+    auto &frame_sync = m_frame_syncs[m_current_frame_info.frame_index];
     const auto &command_buffer = m_swapchain.command_buffers()[m_current_frame_info.image_index];
 
     command_buffer.end();
 
     constexpr auto wait_stages = vk::PipelineStageFlags{vk::PipelineStageFlagBits::eColorAttachmentOutput};
 
-    auto submit_info = vk::SubmitInfo{
-            *current_frame.image_available_semaphore, // Wait semaphore
+    const auto submit_info = vk::SubmitInfo{
+            *frame_sync.semaphores.image_available, // Wait semaphore
             wait_stages, // Wait stages
             *command_buffer, // Command buffer
-            *current_frame.render_finished_semaphore // Signal semaphore
+            *frame_sync.semaphores.render_finished // Signal semaphore
     };
 
-    m_device.queue_families().graphics.queue.submit(submit_info,
-                                                    *m_frames[m_current_frame_info.frame_index].in_flight_fence);
+    m_device.queue_families().graphics.queue.submit(submit_info, *frame_sync.fences.in_flight);
 
-    while (vk::Result::eTimeout ==
-           m_device.device().waitForFences({*m_frames[m_current_frame_info.frame_index].in_flight_fence},
-                                           VK_TRUE,
-                                           std::numeric_limits<std::uint64_t>::max()))
+    while (vk::Result::eTimeout == m_device.device().waitForFences({*frame_sync.fences.in_flight},
+                                                                   VK_TRUE,
+                                                                   std::numeric_limits<std::uint64_t>::max()))
         ;
-    m_device.device().resetFences(*m_frames[m_current_frame_info.frame_index].in_flight_fence);
+    m_device.device().resetFences(*frame_sync.fences.in_flight);
 
-    auto present_info = vk::PresentInfoKHR{1,
-                                           &*current_frame.render_finished_semaphore,
-                                           1,
-                                           &*m_swapchain.get(),
-                                           &m_current_frame_info.image_index};
+    const auto present_info = vk::PresentInfoKHR{1,
+                                                 &*frame_sync.semaphores.render_finished,
+                                                 1,
+                                                 &*m_swapchain.get(),
+                                                 &m_current_frame_info.image_index};
 
     const auto result = m_device.queue_families().present.queue.presentKHR(present_info);
-
     if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
     } else if (result != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to present swapchain image!");
     }
 
-    auto current_frame_finished_time = std::chrono::steady_clock::now();
-    m_prev_frame_info.finished_time =
-            std::chrono::duration<float>(current_frame_finished_time - m_current_frame_info.started_time).count();
-
-    m_current_frame_info.frame_index = (m_current_frame_info.frame_index + 1) % vulkan::g_max_frames_in_flight;
+    m_prev_frame_info.finished_time = m_device.frame_dt();
+    m_current_frame_info.frame_index = (m_current_frame_info.frame_index + 1) % g_max_frames_in_flight;
 }
 
 void Renderer::render(const render_args_s args) {

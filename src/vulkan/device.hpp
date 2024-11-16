@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <format>
 
@@ -10,11 +11,10 @@
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
+#include "frame.hpp"
 #include "vulkan/device_memory.hpp"
 
 namespace sm::arcane::vulkan {
-
-inline static constexpr auto g_max_frames_in_flight = 2u;
 
 struct device_queue_families_s {
     struct family_s {
@@ -37,8 +37,16 @@ public:
     [[nodiscard]] const vk::raii::Device &device() const noexcept { return m_device; }
     [[nodiscard]] device_queue_families_s queue_families() const noexcept { return m_queue_families; }
 
+    [[nodiscard]] frame_info_s &frame_info() noexcept { return m_current_frame_info; }
+    [[nodiscard]] std::uint32_t frame_index() const noexcept { return m_current_frame_info.frame_index; }
+    [[nodiscard]] std::uint32_t image_index() const noexcept { return m_current_frame_info.image_index; }
+    [[nodiscard]] float frame_dt() const noexcept {
+        return std::chrono::duration<float>(std::chrono::steady_clock::now() - m_current_frame_info.started_time)
+                .count();
+    }
+
     [[nodiscard]] DeviceMemoryBuffer create_device_memory_buffer(
-            const vk::BufferUsageFlagBits usages,
+            const vk::Flags<vk::BufferUsageFlagBits> usages,
             const vk::DeviceSize size,
             const vk::DeviceSize offset = 0,
             vk::MemoryPropertyFlags memory_property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
@@ -77,6 +85,8 @@ private:
     vk::raii::Device m_device;
 
     device_queue_families_s m_queue_families;
+
+    frame_info_s m_current_frame_info;
 };
 
 } // namespace sm::arcane::vulkan

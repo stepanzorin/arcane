@@ -4,13 +4,12 @@
 #pragma once
 
 #include <cstdint>
-#include <filesystem>
 #include <vector>
 
 #include <glm/fwd.hpp>
 #include <glm/mat4x4.hpp>
-#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #include "vulkan/device.hpp"
 #include "vulkan/device_memory.hpp"

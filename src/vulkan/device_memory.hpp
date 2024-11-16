@@ -3,6 +3,13 @@
 
 #pragma once
 
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <utility>
+#include <vector>
+
 #include <vulkan/vulkan_raii.hpp>
 
 namespace sm::arcane::vulkan {

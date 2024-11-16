@@ -10,7 +10,7 @@
 #include <spdlog/logger.h>
 #include <vulkan/vulkan_raii.hpp>
 
-#include "cameras/camera.hpp"
+#include "frame.hpp"
 #include "primitive_graphics/mesh.hpp"
 #include "render/passes/wireframe.hpp"
 #include "scene/scene.hpp"
@@ -18,6 +18,8 @@
 #include "vulkan/swapchain.hpp"
 
 namespace sm::arcane {
+
+inline static constexpr auto g_max_frames_in_flight = 2u;
 
 // Temporary pipeline struct. Will remove the struct in the future
 struct cube_render_resources_s {
@@ -42,7 +44,7 @@ public:
     void end_frame();
     void render(render_args_s args);
 
-    [[nodiscard]] const render::frame_info_s &frame_info() const noexcept { return m_current_frame_info; }
+    [[nodiscard]] const frame_info_s &frame_info() const noexcept { return m_current_frame_info; }
 
 private:
     std::shared_ptr<spdlog::logger> m_logger;
@@ -51,10 +53,20 @@ private:
 
     cube_render_resources_s m_resources;
 
-    render::frame_info_s m_current_frame_info{};
-    render::prev_frame_info_s m_prev_frame_info{};
+    frame_info_s &m_current_frame_info;
+    prev_frame_info_s m_prev_frame_info{};
 
-    std::array<render::frame_context_s, vulkan::g_max_frames_in_flight> m_frames{};
+    struct frame_sync_s {
+        struct semaphores_s {
+            vk::raii::Semaphore image_available = nullptr;
+            vk::raii::Semaphore render_finished = nullptr;
+        } semaphores;
+
+        struct fences_s {
+            vk::raii::Fence in_flight = nullptr;
+        } fences;
+    };
+    std::array<frame_sync_s, g_max_frames_in_flight> m_frame_syncs{};
 
     render::passes::Wireframe m_wireframe_pass;
 };

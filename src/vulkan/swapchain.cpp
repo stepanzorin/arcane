@@ -120,6 +120,20 @@ float Swapchain::aspect_ratio() const noexcept {
     return static_cast<float>(m_extent.width) / static_cast<float>(m_extent.height);
 }
 
+void Swapchain::acquire_next_image(const vk::Semaphore &wait_semaphore, const vk::Fence fence) const {
+    auto [result,
+          image_index] = m_swapchain.acquireNextImage(std::numeric_limits<std::uint64_t>::max(), wait_semaphore, fence);
+    assert(image_index < m_color_images.size());
+    if (result == vk::Result::eErrorOutOfDateKHR) {
+        return;
+    }
+    if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
+        throw std::runtime_error("Failed to acquire swapchain image");
+    }
+
+    m_device.frame_info().image_index = image_index;
+}
+
 void Swapchain::revalue() {
     const auto &physical_device = m_device.physical_device();
 
@@ -186,10 +200,10 @@ void Swapchain::revalue() {
 
     m_old_swapchain_ptr = nullptr;
     m_swapchain = {m_device.device(), swapchain_info};
-    m_images = m_swapchain.getImages();
+    m_color_images = m_swapchain.getImages();
 
     m_image_views.clear();
-    m_image_views.reserve(m_images.size());
+    m_image_views.reserve(m_color_images.size());
     {
         auto image_view_create_info = vk::ImageViewCreateInfo{{},
                                                               {},
@@ -197,7 +211,7 @@ void Swapchain::revalue() {
                                                               m_color_format,
                                                               {},
                                                               {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
-        for (const auto image : m_images) {
+        for (const auto image : m_color_images) {
             image_view_create_info.image = image;
             m_image_views.emplace_back(m_device.device(), image_view_create_info);
         }
@@ -217,7 +231,7 @@ void Swapchain::revalue() {
             vk::raii::CommandBuffers{m_device.device(),
                                      vk::CommandBufferAllocateInfo{m_command_pool,
                                                                    vk::CommandBufferLevel::ePrimary,
-                                                                   static_cast<std::uint32_t>(m_images.size())}}),
+                                                                   static_cast<std::uint32_t>(m_color_images.size())}}),
 
     vulkan_logger->set_level(spdlog::level::trace);
     vulkan_logger->trace("Swapchain is recreated:"

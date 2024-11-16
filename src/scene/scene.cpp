@@ -1,18 +1,22 @@
 #include "scene.hpp"
 
+#include <chrono>
+
+#include "frame.hpp"
+
 namespace sm::arcane::scene {
 
 namespace {
 
-[[nodiscard]] float calculate_dt(const render::frame_info_s frame_info) {
+[[nodiscard]] float calculate_dt(const frame_info_s frame_info) {
     return std::chrono::duration<float>{std::chrono::high_resolution_clock::now() - frame_info.started_time}.count();
 }
 
 } // namespace
 
-Scene::Scene(const Window &window, const render::frame_info_s &frame_info, const float swapchain_aspect_ratio)
+Scene::Scene(const Window &window, const vulkan::Device &device, const float swapchain_aspect_ratio)
     : m_window{window},
-      m_frame_info{frame_info},
+      m_device{device},
       m_camera{swapchain_aspect_ratio} {}
 
 cameras::Camera &Scene::camera() { return m_camera; }
@@ -23,7 +27,7 @@ void Scene::update() {
 }
 
 void Scene::update_camera_state() {
-    const auto dt = calculate_dt(m_frame_info);
+    const auto dt = m_device.frame_dt();
 
     if (m_window.is_key_pressed(keyboard_key_e::w)) {
         m_camera.move(cameras::movement_direction_e::forward, dt);

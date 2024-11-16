@@ -1,21 +1,26 @@
 #include "device.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
+#include <iterator>
 #include <limits>
-#include <ranges>
-#include <spdlog/spdlog.h>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_to_string.hpp>
 
 namespace sm::arcane::vulkan {
 
 namespace {
+
+namespace detail {
 
 [[nodiscard]] std::uint32_t find_graphics_queue_family_index(
         const std::vector<vk::QueueFamilyProperties> &queue_family_properties) noexcept {
@@ -29,7 +34,48 @@ namespace {
     return static_cast<std::uint32_t>(std::distance(queue_family_properties.cbegin(), property_it));
 }
 
-namespace detail {
+
+void log_info_about_physical_device(const vk::raii::PhysicalDevice &physical_device) {
+    const auto decode_vendor_id = [](const std::uint32_t vendor_id) -> std::string {
+        // below 0x10000 are the PCI vendor IDs (https://pcisig.com/membership/member-companies)
+        if (vendor_id < 0x10000) {
+            switch (vendor_id) {
+                case 0x1022: return "Advanced Micro Devices";
+                case 0x10DE: return "NVidia Corporation";
+                case 0x8086: return "Intel Corporation";
+                default: return std::to_string(vendor_id);
+            }
+        }
+        // above 0x10000 should be vkVendorIDs
+        return vk::to_string(static_cast<vk::VendorId>(vendor_id));
+    };
+
+    const auto picked_properties = physical_device.getProperties2().properties;
+
+    const auto driver_version = picked_properties.driverVersion;
+    const auto major_version = (driver_version >> 22) & 0x3FF;
+    const auto minor_version = (driver_version >> 14) & 0xFF;
+    const auto patch_version = (driver_version >> 6) & 0xFF;
+
+    const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
+    vulkan_logger->info("Picked physical device:"
+                        "\n\tVendor: {}"
+                        "\n\tDevice Name: {}"
+                        "\n\tDevice Type: {}"
+                        "\n\tDevice Driver: {}.{}.{}"
+                        "\n\tVulkan API Version: {}.{}.{}",
+                        decode_vendor_id(picked_properties.vendorID),
+                        picked_properties.deviceName.data(),
+                        vk::to_string(picked_properties.deviceType),
+                        major_version,
+                        minor_version,
+                        patch_version,
+                        VK_API_VERSION_MAJOR(picked_properties.apiVersion),
+                        VK_API_VERSION_MINOR(picked_properties.apiVersion),
+                        VK_API_VERSION_PATCH(picked_properties.apiVersion));
+}
+
+} // namespace detail
 
 [[nodiscard]] std::pair<std::uint32_t, std::uint32_t> find_graphics_and_present_family_indices(
         const vk::raii::PhysicalDevice &physical_device,
@@ -37,7 +83,7 @@ namespace detail {
     const auto queue_family_properties = physical_device.getQueueFamilyProperties();
     assert(queue_family_properties.size() < std::numeric_limits<std::uint32_t>::max());
 
-    const auto graphics_index = find_graphics_queue_family_index(queue_family_properties);
+    const auto graphics_index = detail::find_graphics_queue_family_index(queue_family_properties);
     if (physical_device.getSurfaceSupportKHR(graphics_index, surface)) {
         // the first `graphics_queue_family_index` does also support presents
         return {graphics_index, graphics_index};
@@ -63,53 +109,13 @@ namespace detail {
     throw std::runtime_error{"Failed to find the queues for both graphics or present"};
 }
 
-} // namespace detail
 
 [[nodiscard]] device_queue_families_s find_queue_families(const vk::raii::Device &device,
                                                           const vk::raii::PhysicalDevice &physical_device,
                                                           const vk::SurfaceKHR surface) {
-    const auto [graphics_index, present_index] = detail::find_graphics_and_present_family_indices(physical_device,
-                                                                                                  surface);
+    const auto [graphics_index, present_index] = find_graphics_and_present_family_indices(physical_device, surface);
     return {.graphics = {.index = graphics_index, .queue = {device, graphics_index, 0}},
             .present = {.index = present_index, .queue = {device, present_index, 0}}};
-}
-
-void log_info_about_physical_device(const vk::PhysicalDeviceProperties picked_properties) {
-    const auto decode_vendor_id = [](const std::uint32_t vendor_id) -> std::string {
-        // below 0x10000 are the PCI vendor IDs (https://pcisig.com/membership/member-companies)
-        if (vendor_id < 0x10000) {
-            switch (vendor_id) {
-                case 0x1022: return "Advanced Micro Devices";
-                case 0x10DE: return "NVidia Corporation";
-                case 0x8086: return "Intel Corporation";
-                default: return std::to_string(vendor_id);
-            }
-        }
-        // above 0x10000 should be vkVendorIDs
-        return vk::to_string(static_cast<vk::VendorId>(vendor_id));
-    };
-
-    const auto driver_version = picked_properties.driverVersion;
-    const auto major_version = (driver_version >> 22) & 0x3FF;
-    const auto minor_version = (driver_version >> 14) & 0xFF;
-    const auto patch_version = (driver_version >> 6) & 0xFF;
-
-    const auto vulkan_logger = spdlog::default_logger()->clone("vulkan");
-    vulkan_logger->info("Picked physical device:"
-                        "\n\tVendor: {}"
-                        "\n\tDevice Name: {}"
-                        "\n\tDevice Type: {}"
-                        "\n\tDevice Driver: {}.{}.{}"
-                        "\n\tVulkan API Version: {}.{}.{}",
-                        decode_vendor_id(picked_properties.vendorID),
-                        picked_properties.deviceName.data(),
-                        vk::to_string(picked_properties.deviceType),
-                        major_version,
-                        minor_version,
-                        patch_version,
-                        VK_API_VERSION_MAJOR(picked_properties.apiVersion),
-                        VK_API_VERSION_MINOR(picked_properties.apiVersion),
-                        VK_API_VERSION_PATCH(picked_properties.apiVersion));
 }
 
 [[nodiscard]] vk::raii::PhysicalDevice pick_physical_device(const vk::raii::Instance &instance) {
@@ -119,7 +125,7 @@ void log_info_about_physical_device(const vk::PhysicalDeviceProperties picked_pr
     }
 
     auto picked_device = physical_devices.front();
-    log_info_about_physical_device(picked_device.getProperties2().properties);
+    detail::log_info_about_physical_device(picked_device);
     return picked_device;
 }
 
@@ -141,7 +147,8 @@ void log_info_about_physical_device(const vk::PhysicalDeviceProperties picked_pr
                                                          VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
                                                          VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME};
 
-    const auto queue_family_index = find_graphics_queue_family_index(physical_device.getQueueFamilyProperties());
+    const auto queue_family_index = detail::find_graphics_queue_family_index(
+            physical_device.getQueueFamilyProperties());
     auto queue_priority = 0.0f;
     const auto device_queue_info = vk::DeviceQueueCreateInfo{{}, queue_family_index, 1, &queue_priority};
     const auto device_create_info = vk::DeviceCreateInfo{

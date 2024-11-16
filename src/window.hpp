@@ -11,8 +11,6 @@
 
 #include "app_config.hpp"
 
-#include <glfw/glfw3.h>
-
 namespace sm::arcane {
 
 // TODO: will define `#if ...` relative OS: Windows - WinAPI; Other - GLFW
