@@ -9,12 +9,11 @@ Scene::Scene(Window &window, const vulkan::Device &device, const float swapchain
 
 cameras::Camera &Scene::camera() { return m_camera; }
 
-void Scene::update() {
-    m_camera.update();
-    update_camera_state();
-}
+void Scene::update() { update_camera_state(); }
 
 void Scene::update_camera_state() {
+    m_camera.update();
+
     const auto dt = m_device.frame_dt();
 
     { // keyboard
