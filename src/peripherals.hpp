@@ -31,6 +31,12 @@ struct mouse_s {
     bool right_button_pressed = false;
 
     std::int32_t wheel_delta = 0;
+
+    void reset() noexcept {
+        dx = 0;
+        dy = 0;
+        wheel_delta = 0;
+    }
 };
 
 } // namespace sm::arcane

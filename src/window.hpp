@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.h>
 
 #include "app_config.hpp"
+#include "peripherals.hpp"
 
 namespace sm::arcane {
 
@@ -176,6 +177,9 @@ public:
 
     [[nodiscard]] bool is_key_pressed(keyboard_key_e key) const noexcept;
     [[nodiscard]] bool is_key_released(keyboard_key_e key) const noexcept;
+
+    [[nodiscard]] const mouse_s &mouse() const noexcept;
+    void reset_mouse() const noexcept;
 
     ~Window();
 

@@ -4,6 +4,8 @@
 
 #include "frame.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace sm::arcane::scene {
 
 namespace {
@@ -14,7 +16,7 @@ namespace {
 
 } // namespace
 
-Scene::Scene(const Window &window, const vulkan::Device &device, const float swapchain_aspect_ratio)
+Scene::Scene(Window &window, const vulkan::Device &device, const float swapchain_aspect_ratio)
     : m_window{window},
       m_device{device},
       m_camera{swapchain_aspect_ratio} {}
@@ -29,28 +31,45 @@ void Scene::update() {
 void Scene::update_camera_state() {
     const auto dt = m_device.frame_dt();
 
-    if (m_window.is_key_pressed(keyboard_key_e::w)) {
-        m_camera.move(cameras::movement_direction_e::forward, dt);
+    { // keyboard
+        if (m_window.is_key_pressed(keyboard_key_e::w)) {
+            m_camera.move(cameras::movement_direction_e::forward, dt);
+        }
+
+        if (m_window.is_key_pressed(keyboard_key_e::s)) {
+            m_camera.move(cameras::movement_direction_e::backward, dt);
+        }
+
+        if (m_window.is_key_pressed(keyboard_key_e::a)) {
+            m_camera.move(cameras::movement_direction_e::left, dt);
+        }
+
+        if (m_window.is_key_pressed(keyboard_key_e::d)) {
+            m_camera.move(cameras::movement_direction_e::right, dt);
+        }
+
+        if (m_window.is_key_pressed(keyboard_key_e::r)) {
+            m_camera.move(cameras::movement_direction_e::up, dt);
+        }
+
+        if (m_window.is_key_pressed(keyboard_key_e::f)) {
+            m_camera.move(cameras::movement_direction_e::down, dt);
+        }
     }
 
-    if (m_window.is_key_pressed(keyboard_key_e::s)) {
-        m_camera.move(cameras::movement_direction_e::backward, dt);
-    }
+    { // mouse
+        const auto &mouse = m_window.mouse();
+        if (mouse.left_button_pressed) {
+            auto x_offset = static_cast<float>(mouse.dx) * dt;
+            auto y_offset = static_cast<float>(mouse.dy) * dt;
+            constexpr auto sensitivity = 80.0f;
+            x_offset *= sensitivity;
+            y_offset *= sensitivity;
 
-    if (m_window.is_key_pressed(keyboard_key_e::a)) {
-        m_camera.move(cameras::movement_direction_e::left, dt);
-    }
-
-    if (m_window.is_key_pressed(keyboard_key_e::d)) {
-        m_camera.move(cameras::movement_direction_e::right, dt);
-    }
-
-    if (m_window.is_key_pressed(keyboard_key_e::r)) {
-        m_camera.move(cameras::movement_direction_e::up, dt);
-    }
-
-    if (m_window.is_key_pressed(keyboard_key_e::f)) {
-        m_camera.move(cameras::movement_direction_e::down, dt);
+            m_camera.set_orientation(x_offset, glm::f32vec3{0.0f, -1.0f, 0.0f});
+            m_camera.set_orientation(y_offset, glm::f32vec3{-1.0f, 0.0f, 0.0f});
+        }
+        m_window.reset_mouse();
     }
 }
 

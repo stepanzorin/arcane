@@ -153,6 +153,10 @@ public:
         return !m_keyboard.keys[std::to_underlying(key)];
     }
 
+    [[nodiscard]] const mouse_s &mouse() const noexcept { return m_mouse; }
+
+    void reset_mouse() const noexcept { m_mouse.reset(); }
+
     ~Impl() override { glfwDestroyWindow(m_window_ptr); }
 
 private:
@@ -241,6 +245,10 @@ VkSurfaceKHR Window::create_surface(const VkInstance &instance) const { return m
 bool Window::is_key_pressed(const keyboard_key_e key) const noexcept { return m_pimpl->is_key_pressed(key); }
 
 bool Window::is_key_released(const keyboard_key_e key) const noexcept { return m_pimpl->is_key_released(key); }
+
+const mouse_s &Window::mouse() const noexcept { return m_pimpl->mouse(); }
+
+void Window::reset_mouse() const noexcept { return m_pimpl->reset_mouse(); }
 
 Window::~Window() = default;
 
