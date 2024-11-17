@@ -8,14 +8,6 @@
 
 namespace sm::arcane::scene {
 
-namespace {
-
-[[nodiscard]] float calculate_dt(const frame_info_s frame_info) {
-    return std::chrono::duration<float>{std::chrono::high_resolution_clock::now() - frame_info.started_time}.count();
-}
-
-} // namespace
-
 Scene::Scene(Window &window, const vulkan::Device &device, const float swapchain_aspect_ratio)
     : m_window{window},
       m_device{device},
