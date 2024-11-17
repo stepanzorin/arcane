@@ -1,11 +1,5 @@
 #include "scene.hpp"
 
-#include <chrono>
-
-#include "frame.hpp"
-
-#include <spdlog/spdlog.h>
-
 namespace sm::arcane::scene {
 
 Scene::Scene(Window &window, const vulkan::Device &device, const float swapchain_aspect_ratio)
