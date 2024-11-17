@@ -215,13 +215,25 @@ void Window::Impl::mouse_button_callback(GLFWwindow *window,
                                          const std::int32_t /*mods*/) {
     auto *wnd = static_cast<Window::Impl *>(glfwGetWindowUserPointer(window));
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_MOUSE_BUTTON_RIGHT) {
         if (action == GLFW_PRESS) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            wnd->m_mouse.left_button_pressed = true;
+
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                wnd->m_mouse.left_button_pressed = true;
+            }
+            if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                wnd->m_mouse.right_button_pressed = true;
+            }
         } else if (action == GLFW_RELEASE) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            wnd->m_mouse.left_button_pressed = false;
+
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                wnd->m_mouse.left_button_pressed = false;
+            }
+            if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                wnd->m_mouse.right_button_pressed = false;
+            }
         }
     }
 }
