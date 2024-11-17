@@ -55,6 +55,14 @@ void Scene::update_camera_state() {
         if (m_window.is_key_pressed(keyboard_key_e::f)) {
             m_camera.move(cameras::movement_direction_e::down, dt);
         }
+
+        if (m_window.is_key_pressed(keyboard_key_e::q)) {
+            m_camera.rotate(cameras::rotation_direction_e::left, dt);
+        }
+
+        if (m_window.is_key_pressed(keyboard_key_e::e)) {
+            m_camera.rotate(cameras::rotation_direction_e::right, dt);
+        }
     }
 
     { // mouse

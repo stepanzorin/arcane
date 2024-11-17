@@ -178,15 +178,15 @@ void Camera::set_position(const glm::f64vec3 &new_position) {
     update_view_matrix();
 }
 
+void Camera::set_orientation(const glm::f64quat &new_orientation) noexcept {
+    m_eye_d.transform.orientation = new_orientation;
+}
+
 void Camera::set_orientation(const float degrees, const glm::f32vec3 &axis) noexcept {
     const auto new_orientation = glm::angleAxis(glm::radians(degrees), axis);
     set_orientation(glm::normalize(new_orientation * m_eye_d.transform.orientation));
     update_view_matrix();
     update_eye_directions();
-}
-
-void Camera::set_orientation(const glm::f64quat &new_orientation) noexcept {
-    m_eye_d.transform.orientation = new_orientation;
 }
 
 void Camera::move(const movement_direction_e direction, const float dt) noexcept {
@@ -202,14 +202,6 @@ void Camera::move(const movement_direction_e direction, const float dt) noexcept
         move_direction -= forward;
     }
 
-    if (direction == movement_direction_e::up) {
-        move_direction -= up;
-    }
-
-    if (direction == movement_direction_e::down) {
-        move_direction += up;
-    }
-
     if (direction == movement_direction_e::left) {
         move_direction -= right;
     }
@@ -218,11 +210,29 @@ void Camera::move(const movement_direction_e direction, const float dt) noexcept
         move_direction += right;
     }
 
+    if (direction == movement_direction_e::up) {
+        move_direction -= up;
+    }
+
+    if (direction == movement_direction_e::down) {
+        move_direction += up;
+    }
+
     move_direction *= m_settings.movement_speed;
     const auto new_position = m_eye_d.transform.position +
                               static_cast<glm::f64vec3>(move_direction) * static_cast<double>(dt);
 
     set_position(new_position);
+}
+
+void Camera::rotate(const rotation_direction_e direction, const float dt) noexcept {
+    if (direction == rotation_direction_e::left) {
+        set_orientation(m_settings.rotation_speed * dt, glm::f32vec3{0.0f, 0.0f, 1.0f});
+    }
+
+    if (direction == rotation_direction_e::right) {
+        set_orientation(-m_settings.rotation_speed * dt, glm::f32vec3{0.0f, 0.0f, 1.0f});
+    }
 }
 
 } // namespace sm::arcane::cameras
