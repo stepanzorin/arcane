@@ -118,9 +118,10 @@ public:
           m_monitor_ptr{detect_monitor()},
           m_window_ptr{create_window(m_monitor_ptr, m_title, m_config)} {
         glfwSetWindowUserPointer(m_window_ptr, this);
+        glfwSetFramebufferSizeCallback(m_window_ptr, resize_callback);
         glfwSetKeyCallback(m_window_ptr, keyboard_callback);
-        glfwSetCursorPosCallback(m_window_ptr, mouse_movement_callback);
         glfwSetMouseButtonCallback(m_window_ptr, mouse_button_callback);
+        glfwSetCursorPosCallback(m_window_ptr, mouse_movement_callback);
     }
 
     [[nodiscard]] required_instance_extensions_s required_instance_extensions() const noexcept {
@@ -149,6 +150,10 @@ public:
         return m_keyboard.keys[std::to_underlying(key)];
     }
 
+    [[nodiscard]] bool is_resized() const noexcept { return m_is_resized; }
+
+    void reset_resize_state() noexcept { m_is_resized = false; }
+
     [[nodiscard]] bool is_key_released(const keyboard_key_e key) const noexcept {
         return !m_keyboard.keys[std::to_underlying(key)];
     }
@@ -160,6 +165,7 @@ public:
     ~Impl() override { glfwDestroyWindow(m_window_ptr); }
 
 private:
+    static void resize_callback(GLFWwindow *window, std::int32_t width, std::int32_t height);
     static void keyboard_callback(GLFWwindow *window,
                                   std::int32_t key,
                                   std::int32_t,
@@ -168,15 +174,24 @@ private:
     static void mouse_movement_callback(GLFWwindow *window, double xpos, double ypos);
     static void mouse_button_callback(GLFWwindow *window, std::int32_t button, std::int32_t action, std::int32_t mods);
 
+
     std::string_view m_title;
     window_config_s m_config;
 
     GLFWmonitor *m_monitor_ptr = nullptr;
     GLFWwindow *m_window_ptr = nullptr;
+    mutable bool m_is_resized = false;
 
     mutable mouse_s m_mouse;
     mutable keyboard_s m_keyboard;
 };
+
+void Window::Impl::resize_callback(GLFWwindow *window, const std::int32_t width, const std::int32_t height) noexcept {
+    auto *wnd = static_cast<Window::Impl *>(glfwGetWindowUserPointer(window));
+    wnd->m_config.extent.width = width;
+    wnd->m_config.extent.height = height;
+    wnd->m_is_resized = true;
+}
 
 void Window::Impl::keyboard_callback(GLFWwindow *window,
                                      const std::int32_t key,
@@ -213,7 +228,7 @@ void Window::Impl::mouse_button_callback(GLFWwindow *window,
                                          const std::int32_t button,
                                          const std::int32_t action,
                                          const std::int32_t /*mods*/) {
-    auto *wnd = static_cast<Window::Impl *>(glfwGetWindowUserPointer(window));
+    const auto *wnd = static_cast<Window::Impl *>(glfwGetWindowUserPointer(window));
 
     if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_MOUSE_BUTTON_RIGHT) {
         if (action == GLFW_PRESS) {
@@ -253,6 +268,10 @@ window_extent_s Window::extent() const noexcept { return m_pimpl->extent(); }
 void Window::pool_events() const noexcept { m_pimpl->pool_events(); }
 
 VkSurfaceKHR Window::create_surface(const VkInstance &instance) const { return m_pimpl->create_surface(instance); }
+
+bool Window::is_resized() const noexcept { return m_pimpl->is_resized(); }
+
+void Window::reset_resize_state() noexcept { m_pimpl->reset_resize_state(); }
 
 bool Window::is_key_pressed(const keyboard_key_e key) const noexcept { return m_pimpl->is_key_pressed(key); }
 

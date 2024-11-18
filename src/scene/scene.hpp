@@ -11,7 +11,7 @@ namespace sm::arcane::scene {
 
 class Scene {
 public:
-    explicit Scene(Window &window, const vulkan::Device &device, float swapchain_aspect_ratio);
+    explicit Scene(Window &window, const vulkan::Device &device, const float &swapchain_aspect_ratio);
 
     [[nodiscard]] cameras::Camera &camera();
 

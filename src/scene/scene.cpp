@@ -2,7 +2,7 @@
 
 namespace sm::arcane::scene {
 
-Scene::Scene(Window &window, const vulkan::Device &device, const float swapchain_aspect_ratio)
+Scene::Scene(Window &window, const vulkan::Device &device, const float &swapchain_aspect_ratio)
     : m_window{window},
       m_device{device},
       m_camera{swapchain_aspect_ratio} {}

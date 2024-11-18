@@ -175,6 +175,9 @@ public:
 
     [[nodiscard]] VkSurfaceKHR create_surface(const VkInstance &) const;
 
+    [[nodiscard]] bool is_resized() const noexcept;
+    void reset_resize_state() noexcept;
+
     [[nodiscard]] bool is_key_pressed(keyboard_key_e key) const noexcept;
     [[nodiscard]] bool is_key_released(keyboard_key_e key) const noexcept;
 

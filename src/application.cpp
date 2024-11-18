@@ -9,12 +9,17 @@ Application::Application(const app_config_s &config)
       m_surface{m_instance.create_surface(m_window)},
       m_device{m_instance.handle(), m_surface},
       m_swapchain_uptr{create_swapchain()},
-      m_renderer{m_device, *m_swapchain_uptr, m_logger->clone("renderer")},
+      m_renderer{m_device, m_swapchain_uptr, m_logger->clone("renderer")},
       m_scene{std::make_optional<scene::Scene>(m_window, m_device, m_swapchain_uptr->aspect_ratio())} {}
 
 void Application::run() {
     while (!m_window.should_close()) {
         m_window.pool_events();
+        if (m_window.is_resized()) {
+            recreate_swapchain();
+            m_window.reset_resize_state();
+        }
+
         m_scene->update();
         m_renderer.render({*m_scene});
     }
