@@ -2,17 +2,18 @@
 
 namespace sm::arcane::scene {
 
-Scene::Scene(Window &window, const vulkan::Device &device, const float &swapchain_aspect_ratio)
+Scene::Scene(Window &window, const vulkan::Device &device, const std::unique_ptr<vulkan::Swapchain> &swapchain)
     : m_window{window},
       m_device{device},
-      m_camera{swapchain_aspect_ratio} {}
+      m_swapchain_uptr{swapchain},
+      m_camera{swapchain->aspect_ratio()} {}
 
 cameras::Camera &Scene::camera() { return m_camera; }
 
 void Scene::update() { update_camera_state(); }
 
 void Scene::update_camera_state() {
-    m_camera.update();
+    m_camera.update(m_swapchain_uptr->aspect_ratio());
 
     const auto dt = m_device.frame_dt();
 

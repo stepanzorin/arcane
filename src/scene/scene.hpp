@@ -3,15 +3,18 @@
 
 #pragma once
 
+#include <memory>
+
 #include "cameras/camera.hpp"
 #include "vulkan/device.hpp"
+#include "vulkan/swapchain.hpp"
 #include "window.hpp"
 
 namespace sm::arcane::scene {
 
 class Scene {
 public:
-    explicit Scene(Window &window, const vulkan::Device &device, const float &swapchain_aspect_ratio);
+    explicit Scene(Window &window, const vulkan::Device &device, const std::unique_ptr<vulkan::Swapchain> &swapchain);
 
     [[nodiscard]] cameras::Camera &camera();
 
@@ -22,6 +25,7 @@ private:
 
     Window &m_window;
     const vulkan::Device &m_device;
+    const std::unique_ptr<vulkan::Swapchain> &m_swapchain_uptr;
 
     cameras::Camera m_camera;
 };

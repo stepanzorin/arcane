@@ -69,14 +69,12 @@ public:
 
     void loot_at(const glm::f64vec3 &target_position) noexcept;
 
-    void update();
+    void update(float swapchain_aspect_ratio);
 
 private:
     void update_eye_directions() noexcept;
     void update_projection_matrix() noexcept;
     void update_view_matrix() noexcept;
-
-    float m_swapchain_aspect_ratio;
 
     camera_settings_s m_settings = {};
     camera_eye_s<double> m_eye_d = {};

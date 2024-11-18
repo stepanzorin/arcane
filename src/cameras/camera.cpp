@@ -123,8 +123,7 @@ template<typename T>
 } // namespace
 
 Camera::Camera(const float swapchain_aspect_ratio)
-    : m_swapchain_aspect_ratio{swapchain_aspect_ratio},
-      m_settings{camera_settings_s{m_swapchain_aspect_ratio}},
+    : m_settings{camera_settings_s{swapchain_aspect_ratio}},
       m_eye_d{create_camera_eye<double>(m_settings)},
       m_matrices{calculate_camera_matrices<double>(m_eye_d, m_settings.aspect_ratio)} {}
 
@@ -136,12 +135,12 @@ void Camera::loot_at(const glm::f64vec3 &target_position) noexcept {
     update_view_matrix();
 }
 
-void Camera::update() {
+void Camera::update(const float swapchain_aspect_ratio) {
     auto &aspect_ratio = m_settings.aspect_ratio;
     auto &prev_aspect_ratio = m_settings.prev_aspect_ratio;
 
     prev_aspect_ratio = aspect_ratio;
-    aspect_ratio = m_swapchain_aspect_ratio;
+    aspect_ratio = swapchain_aspect_ratio;
 
     if (aspect_ratio != prev_aspect_ratio) {
         m_eye_d.fov = compute_fov<double>(aspect_ratio);
