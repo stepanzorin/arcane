@@ -37,7 +37,7 @@ struct render_args_s {
 class Renderer {
 public:
     Renderer(vulkan::Device &device,
-             const vulkan::Swapchain &swapchain,
+             const std::unique_ptr<vulkan::Swapchain> &swapchain,
              std::shared_ptr<spdlog::logger> renderer_logger);
 
     void begin_frame();
@@ -49,7 +49,7 @@ public:
 private:
     std::shared_ptr<spdlog::logger> m_logger;
     vulkan::Device &m_device;
-    const vulkan::Swapchain &m_swapchain;
+    const std::unique_ptr<vulkan::Swapchain> &m_swapchain;
 
     cube_render_resources_s m_resources;
 

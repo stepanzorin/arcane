@@ -123,12 +123,12 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
 } // namespace
 
 Renderer::Renderer(vulkan::Device &device,
-                   const vulkan::Swapchain &swapchain,
+                   const std::unique_ptr<vulkan::Swapchain> &swapchain,
                    std::shared_ptr<spdlog::logger> renderer_logger)
     : m_logger{std::move(renderer_logger)},
       m_device{device},
-      m_swapchain{swapchain},
-      m_resources{create_render_resources(m_device, m_swapchain.command_pool())},
+      m_swapchain{std::move(swapchain)},
+      m_resources{create_render_resources(m_device, m_swapchain->command_pool())},
       m_current_frame_info{m_device.frame_info()},
       m_frame_syncs{[&] {
           auto frame_syncs = std::array<Renderer::frame_sync_s, g_max_frames_in_flight>{};
@@ -142,14 +142,14 @@ Renderer::Renderer(vulkan::Device &device,
       m_wireframe_pass{device, m_swapchain, m_current_frame_info, m_resources.global_descriptor_set_layout} {}
 
 void Renderer::begin_frame() {
-    m_swapchain.acquire_next_image(*m_frame_syncs[m_current_frame_info.frame_index].semaphores.image_available);
+    m_swapchain->acquire_next_image(*m_frame_syncs[m_current_frame_info.frame_index].semaphores.image_available);
     m_current_frame_info.started_time = std::chrono::steady_clock::now();
-    m_swapchain.command_buffers()[m_current_frame_info.image_index].begin(vk::CommandBufferBeginInfo{});
+    m_swapchain->command_buffers()[m_current_frame_info.image_index].begin(vk::CommandBufferBeginInfo{});
 }
 
 void Renderer::end_frame() {
     auto &frame_sync = m_frame_syncs[m_current_frame_info.frame_index];
-    const auto &command_buffer = m_swapchain.command_buffers()[m_current_frame_info.image_index];
+    const auto &command_buffer = m_swapchain->command_buffers()[m_current_frame_info.image_index];
 
     command_buffer.end();
 
@@ -173,13 +173,13 @@ void Renderer::end_frame() {
     const auto present_info = vk::PresentInfoKHR{1,
                                                  &*frame_sync.semaphores.render_finished,
                                                  1,
-                                                 &*m_swapchain.get(),
+                                                 &*m_swapchain->get(),
                                                  &m_current_frame_info.image_index};
 
     const auto result = m_device.queue_families().present.queue.presentKHR(present_info);
     if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
     } else if (result != vk::Result::eSuccess) {
-        throw std::runtime_error("Failed to present swapchain image!");
+        throw std::runtime_error{"Failed to present swapchain image"};
     }
 
     m_prev_frame_info.finished_time = m_device.frame_dt();
@@ -200,7 +200,7 @@ void Renderer::render(const render_args_s args) {
                              nullptr}},
                            nullptr);
 
-    const auto &command_buffer = m_swapchain.command_buffers()[m_current_frame_info.image_index];
+    const auto &command_buffer = m_swapchain->command_buffers()[m_current_frame_info.image_index];
 
     {
         m_wireframe_pass.begin(command_buffer);

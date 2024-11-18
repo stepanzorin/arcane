@@ -198,10 +198,9 @@ void Swapchain::revalue() {
             true,
             m_old_swapchain_ptr ? m_old_swapchain_ptr->handle() : nullptr};
 
-    m_old_swapchain_ptr = nullptr;
-    m_swapchain = {m_device.device(), swapchain_info};
-    m_color_images = m_swapchain.getImages();
+    m_swapchain = m_device.device().createSwapchainKHR(swapchain_info);
 
+    m_color_images = m_swapchain.getImages();
     m_image_views.clear();
     m_image_views.reserve(m_color_images.size());
     {

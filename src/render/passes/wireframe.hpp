@@ -16,15 +16,15 @@ namespace sm::arcane::render::passes {
 class Wireframe {
 public:
     Wireframe(const vulkan::Device &device,
-              const vulkan::Swapchain &swapchain,
+              const std::unique_ptr<vulkan::Swapchain> &swapchain,
               const frame_info_s &frame_info,
               const vk::DescriptorSetLayout global_desc_set_layout)
         : m_swapchain{swapchain},
           m_frame_info{frame_info},
           m_draw_mesh_pipeline{device.device(),
                                global_desc_set_layout,
-                               m_swapchain.color_format(),
-                               m_swapchain.depth_format()} {}
+                               m_swapchain->color_format(),
+                               m_swapchain->depth_format()} {}
 
     void begin(const vk::raii::CommandBuffer &command_buffer) const {
         constexpr auto clear_values = std::array<vk::ClearValue, 2>{
@@ -32,7 +32,7 @@ public:
                 vk::ClearDepthStencilValue{1.0f, 0}};
 
         vulkan::image_layout_transition(*command_buffer,
-                                        m_swapchain.color_images()[m_frame_info.image_index],
+                                        m_swapchain->color_images()[m_frame_info.image_index],
                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
                                         vk::AccessFlagBits::eNone,
@@ -42,13 +42,13 @@ public:
                                         color_subresource_range);
 
         vulkan::image_layout_transition(*command_buffer,
-                                        *m_swapchain.depth_image().image,
+                                        *m_swapchain->depth_image().image,
                                         vk::ImageLayout::eUndefined,
                                         vk::ImageLayout::eDepthAttachmentOptimal,
                                         depth_subresource_range);
 
         const auto color_attachment = vk::RenderingAttachmentInfoKHR{
-                m_swapchain.color_image_views()[m_frame_info.image_index],
+                m_swapchain->color_image_views()[m_frame_info.image_index],
                 vk::ImageLayout::eColorAttachmentOptimal,
                 vk::ResolveModeFlagBits::eNone,
                 {},
@@ -57,7 +57,7 @@ public:
                 vk::AttachmentStoreOp::eStore,
                 clear_values[0]};
 
-        const auto depth_attachment = vk::RenderingAttachmentInfoKHR{m_swapchain.depth_image().image_view,
+        const auto depth_attachment = vk::RenderingAttachmentInfoKHR{m_swapchain->depth_image().image_view,
                                                                      vk::ImageLayout::eDepthAttachmentOptimal,
                                                                      vk::ResolveModeFlagBits::eNone,
                                                                      {},
@@ -68,7 +68,7 @@ public:
 
         const auto rendering_info = vk::RenderingInfoKHR{
                 {},
-                vk::Rect2D{{0, 0}, m_swapchain.extent()},
+                vk::Rect2D{{0, 0}, m_swapchain->extent()},
                 1,
                 0,
                 1,
@@ -79,13 +79,13 @@ public:
 
         command_buffer.beginRendering(rendering_info);
 
-        const auto scissor = vk::Rect2D{{0, 0}, m_swapchain.extent()};
+        const auto scissor = vk::Rect2D{{0, 0}, m_swapchain->extent()};
         command_buffer.setScissor(0, scissor);
 
         const auto viewport = vk::Viewport{0.0f,
                                            0.0f,
-                                           static_cast<float>(m_swapchain.extent().width),
-                                           static_cast<float>(m_swapchain.extent().height),
+                                           static_cast<float>(m_swapchain->extent().width),
+                                           static_cast<float>(m_swapchain->extent().height),
                                            0.0f,
                                            1.0f};
         command_buffer.setViewport(0, viewport);
@@ -95,7 +95,7 @@ public:
         command_buffer.endRendering();
 
         vulkan::image_layout_transition(*command_buffer,
-                                        m_swapchain.color_images()[m_frame_info.image_index],
+                                        m_swapchain->color_images()[m_frame_info.image_index],
                                         vk::ImageLayout::eColorAttachmentOptimal,
                                         vk::ImageLayout::ePresentSrcKHR,
                                         color_subresource_range);
@@ -106,7 +106,7 @@ public:
     }
 
 private:
-    const vulkan::Swapchain &m_swapchain;
+    const std::unique_ptr<vulkan::Swapchain> &m_swapchain;
     const frame_info_s &m_frame_info;
 
     primitive_graphics::shaders::DynamicDrawMeshPipeline m_draw_mesh_pipeline;
