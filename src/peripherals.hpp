@@ -18,6 +18,10 @@ struct keyboard_s {
     bool alt_pressed = false;
 };
 
+struct mouse_config_s {
+    constexpr auto sensitivity = 80.0f;
+};
+
 struct mouse_s {
     double last_x_position = 0.0;
     double last_y_position = 0.0;
@@ -31,6 +35,8 @@ struct mouse_s {
     bool right_button_pressed = false;
 
     std::int32_t wheel_delta = 0;
+
+    mouse_config_s config = {};
 
     void reset() noexcept {
         dx = 0;

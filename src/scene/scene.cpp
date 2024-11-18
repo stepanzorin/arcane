@@ -56,14 +56,13 @@ void Scene::update_camera_state() {
 
         auto x_offset = static_cast<float>(mouse.dx) * dt;
         auto y_offset = static_cast<float>(mouse.dy) * dt;
-        constexpr auto sensitivity = 80.0f;
 
         if (mouse.left_button_pressed && mouse.right_button_pressed) {
-            x_offset *= sensitivity;
+            x_offset *= mouse.config.sensitivity;
             m_camera.set_orientation(x_offset, glm::f32vec3{0.0f, 0.0f, 1.0f});
         } else if (mouse.left_button_pressed) {
-            x_offset *= sensitivity;
-            y_offset *= sensitivity;
+            x_offset *= mouse.config.sensitivity;
+            y_offset *= mouse.config.sensitivity;
 
             m_camera.set_orientation(x_offset, glm::f32vec3{0.0f, -1.0f, 0.0f});
             m_camera.set_orientation(y_offset, glm::f32vec3{-1.0f, 0.0f, 0.0f});
