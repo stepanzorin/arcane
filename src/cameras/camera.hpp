@@ -10,6 +10,7 @@
 #include <glm/vec3.hpp>
 
 #include "cameras/transform.hpp"
+#include "scene/viewpoint.hpp"
 
 namespace sm::arcane::cameras {
 
@@ -30,6 +31,7 @@ struct camera_matrices_s {
 struct camera_settings_s {
     float aspect_ratio;
     float prev_aspect_ratio;
+    scene::viewpoint_s viewpoint;
     float movement_speed = 1.0f;
     float rotation_speed = 50.0f;
 };
@@ -63,6 +65,8 @@ public:
     void set_position(const glm::f64vec3 &new_position);
     void set_orientation(const glm::f64quat &new_orientation) noexcept;
     void set_orientation(float degrees, const glm::f32vec3 &axis) noexcept;
+
+    void use_or_create_viewpoint(scene::viewpoint_action_e action);
 
     void move(movement_direction_e direction, float dt) noexcept;
     void rotate(rotation_direction_e direction, float dt) noexcept;

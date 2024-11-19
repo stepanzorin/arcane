@@ -4,6 +4,8 @@
 #include <limits>
 #include <numbers>
 
+#include <glm/detail/qualifier.hpp>
+
 namespace sm::arcane::cameras {
 
 namespace {
@@ -167,8 +169,8 @@ void Camera::update_eye_directions() noexcept {
     auto &[forward, up, right] = m_eye_d.transform.directions;
     const auto &view_matrix = m_matrices.view_matrix;
 
-    forward = glm::normalize(glm::f32vec3(view_matrix[0][2], view_matrix[1][2], view_matrix[2][2]));
-    right = glm::normalize(glm::f32vec3(view_matrix[0][0], view_matrix[1][0], view_matrix[2][0]));
+    forward = glm::normalize(glm::f32vec3{view_matrix[0][2], view_matrix[1][2], view_matrix[2][2]});
+    right = glm::normalize(glm::f32vec3{view_matrix[0][0], view_matrix[1][0], view_matrix[2][0]});
     up = glm::cross(forward, right);
 }
 
@@ -186,6 +188,32 @@ void Camera::set_orientation(const float degrees, const glm::f32vec3 &axis) noex
     set_orientation(glm::normalize(new_orientation * m_eye_d.transform.orientation));
     update_view_matrix();
     update_eye_directions();
+}
+
+void Camera::use_or_create_viewpoint(const scene::viewpoint_action_e action) {
+    auto &viewpoint = m_settings.viewpoint;
+    switch (action) {
+        case scene::viewpoint_action_e::base: {
+            set_position({0.0, 0.0, 0.0});
+            set_orientation({0.0f, 0.0f, 0.0f, 0.0f});
+            return;
+        }
+
+        case scene::viewpoint_action_e::save: {
+            viewpoint.position = m_eye_d.transform.position;
+            viewpoint.orientation = m_eye_d.transform.orientation;
+            scene::save_viewpoint_to_json(viewpoint);
+            return;
+        }
+
+        case scene::viewpoint_action_e::load: {
+            viewpoint = scene::load_viewpoint_from_json();
+            set_position({viewpoint.position});
+            set_orientation(viewpoint.orientation);
+            return;
+        }
+    }
+    std::unreachable();
 }
 
 void Camera::move(const movement_direction_e direction, const float dt) noexcept {
