@@ -19,7 +19,7 @@ struct keyboard_s {
 };
 
 struct mouse_config_s {
-    constexpr auto sensitivity = 80.0f;
+    const float sensitivity = 80.0f;
 };
 
 struct mouse_s {
