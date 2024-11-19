@@ -20,6 +20,8 @@ struct viewpoint_s {
     BOOST_DESCRIBE_STRUCT(viewpoint_s, (), (position, orientation))
 };
 
+[[nodiscard]] bool already_exists_viewpoint() noexcept;
+
 [[nodiscard]] viewpoint_s load_viewpoint_from_json();
 void save_viewpoint_to_json(const viewpoint_s & /* viewpoint */);
 

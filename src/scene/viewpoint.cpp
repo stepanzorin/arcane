@@ -1,5 +1,6 @@
 #include "viewpoint.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -26,6 +27,8 @@ namespace {
 const auto g_viewpoint_file_path = util::application_directory_path() / "viewpoint.json";
 
 } // namespace
+
+bool already_exists_viewpoint() noexcept { return std::filesystem::exists(g_viewpoint_file_path); }
 
 viewpoint_s load_viewpoint_from_json() {
     auto file = std::ifstream{g_viewpoint_file_path};

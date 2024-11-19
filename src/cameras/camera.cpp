@@ -20,8 +20,8 @@ template<typename T>
 template<typename T>
 [[nodiscard]] camera_eye_s<T> create_camera_eye(camera_settings_s &settings) {
     auto transform = transform_s{};
-    transform.position = {0.0f, 0.0f, 0.0f};
-    transform.orientation = {0.0f, 0.0f, 0.0f, 0.0f};
+    transform.position = settings.viewpoint.position;
+    transform.orientation = settings.viewpoint.orientation;
 
     return {.transform = transform,
             .fov = compute_fov<double>(settings.aspect_ratio),
@@ -122,10 +122,22 @@ template<typename T>
             .view_matrix_inverted = view_matrices.view_matrix_inverted};
 }
 
+[[nodiscard]] scene::viewpoint_s init_viewpoint() {
+    if (scene::already_exists_viewpoint()) {
+        return scene::load_viewpoint_from_json();
+    }
+
+    constexpr auto viewpoint = scene::viewpoint_s{};
+    scene::save_viewpoint_to_json(viewpoint);
+    return viewpoint;
+}
+
 } // namespace
 
 Camera::Camera(const float swapchain_aspect_ratio)
-    : m_settings{camera_settings_s{swapchain_aspect_ratio}},
+    : m_settings{camera_settings_s{.aspect_ratio = swapchain_aspect_ratio,
+                                   .prev_aspect_ratio = 0.0f,
+                                   .viewpoint = init_viewpoint()}},
       m_eye_d{create_camera_eye<double>(m_settings)},
       m_matrices{calculate_camera_matrices<double>(m_eye_d, m_settings.aspect_ratio)} {}
 
