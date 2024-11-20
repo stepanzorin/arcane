@@ -44,7 +44,7 @@ private:
                                                                                false,
                                                                                false,
                                                                                vk::PolygonMode::eFill,
-                                                                               vk::CullModeFlagBits::eFront,
+                                                                               vk::CullModeFlagBits::eNone,
                                                                                vk::FrontFace::eCounterClockwise);
 
         const auto colorComponentFlags = vk::ColorComponentFlags{
