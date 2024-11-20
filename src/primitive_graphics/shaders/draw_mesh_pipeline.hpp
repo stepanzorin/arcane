@@ -19,9 +19,9 @@ public:
         : m_device(device),
           m_pipeline_layout(vk::raii::PipelineLayout(m_device, {{}, descriptor_set_layout})),
           m_pipeline_cache{m_device, vk::PipelineCacheCreateInfo{}},
-          m_pipeline(nullptr),
-          m_color_format(color_format),
-          m_depth_format(depth_format) {
+          m_pipeline{nullptr},
+          m_color_format{color_format},
+          m_depth_format{depth_format} {
         createPipeline(m_device);
     }
 

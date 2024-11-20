@@ -40,7 +40,6 @@ viewpoint_s load_viewpoint_from_json() {
     auto position = obj["position"].as_array();
     auto orientation = obj["orientation"].as_array();
 
-    const auto t = position[0].as_double();
     return {.position = {position[0].as_double(), position[1].as_double(), position[2].as_double()},
             .orientation = {static_cast<float>(orientation[0].as_double()),
                             static_cast<float>(orientation[1].as_double()),

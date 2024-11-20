@@ -133,8 +133,8 @@ Renderer::Renderer(vulkan::Device &device,
       m_frame_syncs{[&] {
           auto frame_syncs = std::array<Renderer::frame_sync_s, g_max_frames_in_flight>{};
           for (auto &sync : frame_syncs) {
-              sync.semaphores.image_available = vk::raii::Semaphore{m_device.device(), vk::SemaphoreCreateInfo{}};
-              sync.semaphores.render_finished = vk::raii::Semaphore{m_device.device(), vk::SemaphoreCreateInfo{}};
+              sync.semaphores.image_available = m_device.device().createSemaphore({vk::SemaphoreCreateInfo{}});
+              sync.semaphores.render_finished = m_device.device().createSemaphore({vk::SemaphoreCreateInfo{}});
               sync.fences.in_flight = vk::raii::Fence{m_device.device(), vk::FenceCreateInfo{}};
           }
           return frame_syncs;
