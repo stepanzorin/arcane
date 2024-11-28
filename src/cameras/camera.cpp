@@ -191,7 +191,7 @@ void Camera::set_position(const glm::f64vec3 &new_position) {
     update_view_matrix();
 }
 
-void Camera::set_orientation(const glm::f64quat &new_orientation) noexcept {
+void Camera::set_orientation(const glm::f32quat &new_orientation) noexcept {
     m_eye_d.transform.orientation = new_orientation;
 }
 
@@ -206,8 +206,8 @@ void Camera::use_or_create_viewpoint(const scene::viewpoint_action_e action) {
     auto &viewpoint = m_settings.viewpoint;
     switch (action) {
         case scene::viewpoint_action_e::base: {
-            set_position({0.0, 0.0, 0.0});
-            set_orientation({0.0f, 0.0f, 0.0f, 0.0f});
+            set_position(g_default_position);
+            set_orientation(g_default_orientation);
             return;
         }
 
@@ -266,11 +266,11 @@ void Camera::move(const movement_direction_e direction, const float dt) noexcept
 
 void Camera::rotate(const rotation_direction_e direction, const float dt) noexcept {
     if (direction == rotation_direction_e::left) {
-        set_orientation(m_settings.rotation_speed * dt, glm::f32vec3{0.0f, 0.0f, 1.0f});
+        set_orientation(m_settings.rotation_speed * dt, g_direction_forward);
     }
 
     if (direction == rotation_direction_e::right) {
-        set_orientation(-m_settings.rotation_speed * dt, glm::f32vec3{0.0f, 0.0f, 1.0f});
+        set_orientation(-m_settings.rotation_speed * dt, g_direction_forward);
     }
 }
 

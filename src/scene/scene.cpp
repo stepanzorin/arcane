@@ -27,7 +27,7 @@ void Scene::update_camera_state() {
 
         if (mouse.left_button_pressed && mouse.right_button_pressed) {
             x_offset *= mouse.config.sensitivity;
-            m_camera.set_orientation(x_offset, glm::f32vec3{0.0f, 0.0f, 1.0f});
+            m_camera.set_orientation(x_offset, cameras::g_direction_forward);
         } else if (mouse.left_button_pressed) {
             x_offset *= mouse.config.sensitivity;
             y_offset *= mouse.config.sensitivity;

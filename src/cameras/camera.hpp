@@ -63,7 +63,7 @@ public:
     [[nodiscard]] const camera_matrices_s<double> &matrices() const { return m_matrices; }
 
     void set_position(const glm::f64vec3 &new_position);
-    void set_orientation(const glm::f64quat &new_orientation) noexcept;
+    void set_orientation(const glm::f32quat &new_orientation) noexcept;
     void set_orientation(float degrees, const glm::f32vec3 &axis) noexcept;
 
     void use_or_create_viewpoint(scene::viewpoint_action_e action);
