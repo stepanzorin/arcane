@@ -188,6 +188,7 @@ void Renderer::end_frame() {
 
 void Renderer::render(const render_args_s args) {
     begin_frame();
+
     const auto &camera = args.scene.camera();
 
     m_resources.global_ubos[m_current_frame_info.frame_index].upload(
