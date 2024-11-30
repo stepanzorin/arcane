@@ -7,7 +7,7 @@
 
 namespace sm::arcane::render::passes {
 
-inline constexpr auto color_subresource_range = vk::ImageSubresourceRange{
+inline constexpr auto g_color_subresource_range = vk::ImageSubresourceRange{
         vk::ImageAspectFlagBits::eColor,
         0,
         vk::RemainingMipLevels,
@@ -15,7 +15,7 @@ inline constexpr auto color_subresource_range = vk::ImageSubresourceRange{
         vk::RemainingArrayLayers,
 };
 
-inline constexpr auto depth_subresource_range = vk::ImageSubresourceRange{
+inline constexpr auto g_depth_subresource_range = vk::ImageSubresourceRange{
         vk::ImageAspectFlagBits::eDepth,
         0,
         vk::RemainingMipLevels,
