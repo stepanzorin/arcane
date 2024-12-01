@@ -42,8 +42,8 @@ public:
 
     ~Mesh() = default;
 
-    void bind(vk::CommandBuffer command_buffer) const;
-    void draw(vk::CommandBuffer command_buffer) const;
+    void bind(vk::CommandBuffer command_buffer) const noexcept;
+    void draw(vk::CommandBuffer command_buffer) const noexcept;
 
     [[nodiscard]] std::uint32_t vertex_count() const noexcept;
     [[nodiscard]] const vulkan::DeviceMemoryBuffer &vertex_buffer() const noexcept;

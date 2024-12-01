@@ -3,9 +3,10 @@
 
 #pragma once
 
-#include "primitive_graphics/shaders/draw_mesh_pipeline.hpp"
+#include "primitive_graphics/systems.hpp"
 #include "render/common.hpp"
 #include "render/passes/common.hpp"
+#include "vulkan/image_barriers.hpp"
 #include "vulkan/swapchain.hpp"
 
 #include <spdlog/spdlog.h>
@@ -21,11 +22,18 @@ public:
               const vk::DescriptorSetLayout global_desc_set_layout)
         : m_swapchain{swapchain},
           m_frame_info{frame_info},
-          m_draw_mesh_pipeline{device.device(),
-                               global_desc_set_layout,
-                               m_swapchain->color_format(),
-                               m_swapchain->depth_format()} {}
+          m_draw_mesh_system{{device, swapchain, {.descriptor_set_layout = global_desc_set_layout}}} {}
 
+
+    void render(const render_args &args) const {
+        begin(args.command_buffer);
+        {
+            m_draw_mesh_system.render(args); //
+        }
+        end(args.command_buffer);
+    }
+
+private:
     void begin(const vk::raii::CommandBuffer &command_buffer) const {
         constexpr auto clear_values = std::array<vk::ClearValue, 2>{
                 vk::ClearColorValue{std::array{0.2f, 0.2f, 0.2f, 0.2f}},
@@ -39,13 +47,13 @@ public:
                                         vk::AccessFlagBits::eColorAttachmentWrite,
                                         vk::ImageLayout::eUndefined,
                                         vk::ImageLayout::eColorAttachmentOptimal,
-                                        color_subresource_range);
+                                        g_color_subresource_range);
 
         vulkan::image_layout_transition(*command_buffer,
                                         *m_swapchain->depth_image().image,
                                         vk::ImageLayout::eUndefined,
                                         vk::ImageLayout::eDepthAttachmentOptimal,
-                                        depth_subresource_range);
+                                        g_depth_subresource_range);
 
         const auto color_attachment = vk::RenderingAttachmentInfoKHR{
                 m_swapchain->color_image_views()[m_frame_info.image_index],
@@ -98,18 +106,13 @@ public:
                                         m_swapchain->color_images()[m_frame_info.image_index],
                                         vk::ImageLayout::eColorAttachmentOptimal,
                                         vk::ImageLayout::ePresentSrcKHR,
-                                        color_subresource_range);
+                                        g_color_subresource_range);
     }
 
-    [[nodiscard]] const primitive_graphics::shaders::DynamicDrawMeshPipeline &draw_mesh_pipeline() const noexcept {
-        return m_draw_mesh_pipeline;
-    }
-
-private:
     const std::unique_ptr<vulkan::Swapchain> &m_swapchain;
     const frame_info_s &m_frame_info;
 
-    primitive_graphics::shaders::DynamicDrawMeshPipeline m_draw_mesh_pipeline;
+    primitive_graphics::DrawMeshSystem m_draw_mesh_system;
 };
 
 } // namespace sm::arcane::render::passes

@@ -27,7 +27,6 @@ struct cube_render_resources_s {
     std::vector<vulkan::DeviceMemoryBuffer> global_ubos;
     vk::raii::DescriptorSetLayout global_descriptor_set_layout;
     std::vector<vk::raii::DescriptorSet> global_descriptor_sets;
-    primitive_graphics::Mesh cube_mesh;
 };
 
 struct render_args_s {

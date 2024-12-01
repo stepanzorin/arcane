@@ -1,5 +1,6 @@
 add_subdirectory(cameras)
 add_subdirectory(common)
+add_subdirectory(objects)
 add_subdirectory(primitive_graphics)
 add_subdirectory(render)
 add_subdirectory(scene)

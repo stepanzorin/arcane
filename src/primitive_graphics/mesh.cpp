@@ -57,7 +57,7 @@ Mesh::Mesh(const vulkan::Device &device,
       m_index_buffer{m_indices.empty() ? nullptr : fill_index_buffer(device, command_pool, m_indices)} {}
 
 
-void Mesh::bind(const vk::CommandBuffer command_buffer) const {
+void Mesh::bind(const vk::CommandBuffer command_buffer) const noexcept {
     const auto vertex_buffers = std::vector{*m_vertex_buffer.buffer};
     const auto offsets = std::vector<vk::DeviceSize>{0};
 
@@ -68,7 +68,7 @@ void Mesh::bind(const vk::CommandBuffer command_buffer) const {
     }
 }
 
-void Mesh::draw(const vk::CommandBuffer command_buffer) const {
+void Mesh::draw(const vk::CommandBuffer command_buffer) const noexcept {
     if (m_exists_index_buffer) {
         command_buffer.drawIndexed(m_index_count, 1, 0, 0, 0);
     } else {

@@ -112,12 +112,10 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
     auto vertices = primitive_graphics::blanks::cube_vertices;
     auto indices = primitive_graphics::blanks::cube_indices;
 
-    return cube_render_resources_s{
-            .global_descriptor_pool = std::move(global_descriptor_pool),
-            .global_ubos = std::move(global_ubos),
-            .global_descriptor_set_layout = std::move(global_descriptor_set_layout),
-            .global_descriptor_sets = std::move(global_descriptor_sets),
-            .cube_mesh = primitive_graphics::Mesh{device, command_pool, std::move(vertices), std::move(indices)}};
+    return cube_render_resources_s{.global_descriptor_pool = std::move(global_descriptor_pool),
+                                   .global_ubos = std::move(global_ubos),
+                                   .global_descriptor_set_layout = std::move(global_descriptor_set_layout),
+                                   .global_descriptor_sets = std::move(global_descriptor_sets)};
 }
 
 } // namespace
@@ -203,21 +201,15 @@ void Renderer::render(const render_args_s args) {
 
     const auto &command_buffer = m_swapchain->command_buffers()[m_current_frame_info.image_index];
 
+    const auto render_args = render::render_args{
+            m_device,
+            m_swapchain,
+            command_buffer,
+            {.descriptor_set_layout = *m_resources.global_descriptor_set_layout,
+             .descriptor_set = *m_resources.global_descriptor_sets[m_current_frame_info.frame_index]}};
+
     {
-        m_wireframe_pass.begin(command_buffer);
-
-        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_wireframe_pass.draw_mesh_pipeline().handle());
-
-        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *m_wireframe_pass.draw_mesh_pipeline().layout(),
-                                          0,
-                                          {*m_resources.global_descriptor_sets[m_current_frame_info.frame_index]},
-                                          nullptr);
-
-        m_resources.cube_mesh.bind(*command_buffer);
-        m_resources.cube_mesh.draw(*command_buffer);
-
-        m_wireframe_pass.end(command_buffer);
+        m_wireframe_pass.render(render_args); //
     }
 
     end_frame();

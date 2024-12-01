@@ -3,7 +3,9 @@ target_sources(
     PRIVATE # cmake-format: sort
             mesh.cpp
             mesh.hpp
-            primitives.hpp)
+            primitives.hpp
+            systems.cpp
+            systems.hpp)
 
 # Shader part
 target_sources(
