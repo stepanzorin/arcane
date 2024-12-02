@@ -92,8 +92,8 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
             vk::DescriptorPoolCreateInfo{vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, max_sets, pool_sizes}};
 }
 
-[[nodiscard]] cube_render_resources_s create_render_resources(const vulkan::Device &device,
-                                                              const vk::CommandPool command_pool) {
+[[nodiscard]] global_resources_s create_render_resources(const vulkan::Device &device,
+                                                         const vk::CommandPool command_pool) {
     auto global_descriptor_pool = make_descriptor_pool(device.device(),
                                                        {{vk::DescriptorType::eUniformBuffer, g_max_frames_in_flight}});
 
@@ -112,10 +112,10 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
     auto vertices = primitive_graphics::blanks::cube_vertices;
     auto indices = primitive_graphics::blanks::cube_indices;
 
-    return cube_render_resources_s{.global_descriptor_pool = std::move(global_descriptor_pool),
-                                   .global_ubos = std::move(global_ubos),
-                                   .global_descriptor_set_layout = std::move(global_descriptor_set_layout),
-                                   .global_descriptor_sets = std::move(global_descriptor_sets)};
+    return {.global_descriptor_pool = std::move(global_descriptor_pool),
+            .global_ubos = std::move(global_ubos),
+            .global_descriptor_set_layout = std::move(global_descriptor_set_layout),
+            .global_descriptor_sets = std::move(global_descriptor_sets)};
 }
 
 } // namespace
@@ -137,7 +137,7 @@ Renderer::Renderer(vulkan::Device &device,
           }
           return frame_syncs;
       }()},
-      m_wireframe_pass{device, m_swapchain, m_current_frame_info, m_resources.global_descriptor_set_layout} {}
+      m_wireframe_pass{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info} {}
 
 void Renderer::begin_frame() {
     m_swapchain->acquire_next_image(*m_frame_syncs[m_current_frame_info.frame_index].semaphores.image_available);
@@ -184,7 +184,7 @@ void Renderer::end_frame() {
     m_current_frame_info.frame_index = (m_current_frame_info.frame_index + 1) % g_max_frames_in_flight;
 }
 
-void Renderer::render(const render_args_s args) {
+void Renderer::render(const render_context_s args) {
     begin_frame();
 
     const auto &camera = args.scene.camera();
@@ -201,7 +201,7 @@ void Renderer::render(const render_args_s args) {
 
     const auto &command_buffer = m_swapchain->command_buffers()[m_current_frame_info.image_index];
 
-    const auto render_args = render::render_args{
+    const auto render_args = render::render_args_s{
             m_device,
             m_swapchain,
             command_buffer,

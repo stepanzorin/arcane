@@ -8,18 +8,18 @@
 namespace sm::arcane::render {
 
 struct global_render_args {
-    vk::DescriptorSetLayout descriptor_set_layout;
-    vk::DescriptorSet descriptor_set;
+    vk::DescriptorSetLayout descriptor_set_layout = nullptr;
+    vk::DescriptorSet descriptor_set = nullptr;
 };
 
-struct render_args {
+struct render_args_s {
     vulkan::Device &device;
     const std::unique_ptr<vulkan::Swapchain> &swapchain;
     const vk::raii::CommandBuffer &command_buffer;
     global_render_args global;
 };
 
-struct create_resource_args_s {
+struct pass_context_s {
     const vulkan::Device &device;
     const std::unique_ptr<vulkan::Swapchain> &swapchain;
     global_render_args global;

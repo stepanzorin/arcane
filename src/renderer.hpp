@@ -22,14 +22,14 @@ namespace sm::arcane {
 inline static constexpr auto g_max_frames_in_flight = 2u;
 
 // Temporary pipeline struct. Will remove the struct in the future
-struct cube_render_resources_s {
+struct global_resources_s {
     vk::raii::DescriptorPool global_descriptor_pool;
     std::vector<vulkan::DeviceMemoryBuffer> global_ubos;
     vk::raii::DescriptorSetLayout global_descriptor_set_layout;
     std::vector<vk::raii::DescriptorSet> global_descriptor_sets;
 };
 
-struct render_args_s {
+struct render_context_s {
     scene::Scene &scene;
 };
 
@@ -41,7 +41,7 @@ public:
 
     void begin_frame();
     void end_frame();
-    void render(render_args_s args);
+    void render(render_context_s args);
 
     [[nodiscard]] const frame_info_s &frame_info() const noexcept { return m_current_frame_info; }
 
@@ -50,7 +50,7 @@ private:
     vulkan::Device &m_device;
     const std::unique_ptr<vulkan::Swapchain> &m_swapchain;
 
-    cube_render_resources_s m_resources;
+    global_resources_s m_resources;
 
     frame_info_s &m_current_frame_info;
     prev_frame_info_s m_prev_frame_info{};

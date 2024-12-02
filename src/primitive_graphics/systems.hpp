@@ -19,24 +19,24 @@ public:
 
         Mesh cube_mesh;
 
-        [[nodiscard]] static resources_s create(const render::create_resource_args_s &args) {
+        [[nodiscard]] static resources_s create(const render::pass_context_s &ctx) {
             auto vertices = blanks::cube_vertices;
             auto indices = blanks::cube_indices;
 
-            return {.draw_mesh_pipeline = {args.device.device(),
-                                           args.global.descriptor_set_layout,
-                                           args.swapchain->color_format(),
-                                           args.swapchain->depth_format()},
-                    .cube_mesh = Mesh{args.device,
-                                      *args.swapchain->command_pool(),
+            return {.draw_mesh_pipeline = {ctx.device.device(),
+                                           ctx.global.descriptor_set_layout,
+                                           ctx.swapchain->color_format(),
+                                           ctx.swapchain->depth_format()},
+                    .cube_mesh = Mesh{ctx.device,
+                                      *ctx.swapchain->command_pool(),
                                       std::move(vertices),
                                       std::move(indices)}};
         }
     };
 
-    explicit DrawMeshSystem(const render::create_resource_args_s &args) : m_resources{resources_s::create(args)} {}
+    explicit DrawMeshSystem(const render::pass_context_s &ctx) : m_resources{resources_s::create(ctx)} {}
 
-    void render(const render::render_args &args) const {
+    void render(const render::render_args_s &args) const {
         args.command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_resources.draw_mesh_pipeline.handle());
 
         args.command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,

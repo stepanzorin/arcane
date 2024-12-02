@@ -16,16 +16,12 @@ namespace sm::arcane::render::passes {
 // Wireframe pass - contains only vertex and color data
 class Wireframe {
 public:
-    Wireframe(const vulkan::Device &device,
-              const std::unique_ptr<vulkan::Swapchain> &swapchain,
-              const frame_info_s &frame_info,
-              const vk::DescriptorSetLayout global_desc_set_layout)
-        : m_swapchain{swapchain},
+    Wireframe(const pass_context_s &pass_context, const frame_info_s &frame_info)
+        : m_swapchain{pass_context.swapchain},
           m_frame_info{frame_info},
-          m_draw_mesh_system{{device, swapchain, {.descriptor_set_layout = global_desc_set_layout}}} {}
+          m_draw_mesh_system{pass_context} {}
 
-
-    void render(const render_args &args) const {
+    void render(const render_args_s &args) const {
         begin(args.command_buffer);
         {
             m_draw_mesh_system.render(args); //
