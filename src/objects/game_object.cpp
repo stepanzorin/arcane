@@ -18,6 +18,8 @@ void GameObject::set_scale(const float scale) noexcept { m_transform.scale *= sc
 
 void GameObject::set_scale(const glm::f32vec3 &scale) noexcept { m_transform.scale *= scale; }
 
+std::shared_ptr<primitive_graphics::Mesh> GameObject::mesh() const noexcept { return m_mesh; }
+
 void GameObject::set_orientation(const float degrees, const glm::f32vec3 &axis) noexcept {
     const auto new_rotation = glm::angleAxis(glm::radians(degrees), glm::normalize((axis)));
 

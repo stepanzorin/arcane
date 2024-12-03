@@ -76,6 +76,7 @@ file(MAKE_DIRECTORY ${SM_ARCANE_SHADERS_OUTPUT_DIR})
 
 set(SM_ARCANE_SHADER_DIRS
     # cmake-format: sort
+    ${CMAKE_SOURCE_DIR}/src/objects/shaders
     ${CMAKE_SOURCE_DIR}/src/primitive_graphics/shaders)
 
 set(SM_ARCANE_SHADER_SOURCES)
