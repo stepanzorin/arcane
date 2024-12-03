@@ -2,7 +2,9 @@ target_sources(
     arcane
     PRIVATE # cmake-format: sort
             game_object.cpp
-            game_object.hpp)
+            game_object.hpp
+            systems.cpp
+            systems.hpp)
 
 # Shader part
 target_sources(
