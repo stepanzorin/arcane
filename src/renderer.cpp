@@ -137,6 +137,7 @@ Renderer::Renderer(vulkan::Device &device,
           }
           return frame_syncs;
       }()},
+      m_gbuffer_pass{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info},
       m_wireframe_pass{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info} {}
 
 void Renderer::begin_frame() {
@@ -209,7 +210,7 @@ void Renderer::render(const render_context_s args) {
              .descriptor_set = *m_resources.global_descriptor_sets[m_current_frame_info.frame_index]}};
 
     {
-        m_wireframe_pass.render(render_args); //
+        m_gbuffer_pass.render(render_args); //
     }
 
     end_frame();

@@ -12,6 +12,7 @@
 
 #include "frame.hpp"
 #include "primitive_graphics/mesh.hpp"
+#include "render/passes/gbuffer.hpp"
 #include "render/passes/wireframe.hpp"
 #include "scene/scene.hpp"
 #include "vulkan/device.hpp"
@@ -67,6 +68,7 @@ private:
     };
     std::array<frame_sync_s, g_max_frames_in_flight> m_frame_syncs{};
 
+    render::passes::Gbuffer m_gbuffer_pass;
     render::passes::Wireframe m_wireframe_pass;
 };
 
