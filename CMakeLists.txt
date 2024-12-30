@@ -60,6 +60,7 @@ target_link_libraries(
             Vulkan::Vulkan)
 
 target_include_directories(arcane PUBLIC src)
+set(SM_ARCANE_SHADER_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/src)
 
 add_subdirectory(src)
 
@@ -76,6 +77,7 @@ file(MAKE_DIRECTORY ${SM_ARCANE_SHADERS_OUTPUT_DIR})
 
 set(SM_ARCANE_SHADER_DIRS
     # cmake-format: sort
+    ${CMAKE_SOURCE_DIR}/src/lightings/shaders
     ${CMAKE_SOURCE_DIR}/src/objects/shaders
     ${CMAKE_SOURCE_DIR}/src/primitive_graphics/shaders)
 
@@ -88,6 +90,11 @@ endforeach ()
 
 target_compile_definitions(arcane PRIVATE SM_ARCANE_SPIRV_DIR_PATH="${SM_ARCANE_SHADERS_OUTPUT_DIR}/")
 
+set(SM_ARCANE_SHADER_INCLUDE_OPTIONS "")
+foreach (INC_DIR IN LISTS SM_ARCANE_SHADER_INCLUDE_DIRS)
+    list(APPEND SM_ARCANE_SHADER_INCLUDE_OPTIONS "-I" "${INC_DIR}")
+endforeach ()
+
 foreach (SHADER_SOURCE IN LISTS SM_ARCANE_SHADER_SOURCES)
     get_filename_component(SHADER_NAME ${SHADER_SOURCE} NAME_WE)
     get_filename_component(SHADER_EXT ${SHADER_SOURCE} EXT)
@@ -98,7 +105,8 @@ foreach (SHADER_SOURCE IN LISTS SM_ARCANE_SHADER_SOURCES)
 
     add_custom_command(
         OUTPUT ${SM_ARCANE_SHADER_SPV_OUTPUT}
-        COMMAND ${GLSLC_EXECUTABLE} ${SHADER_SOURCE} -o ${SM_ARCANE_SHADER_SPV_OUTPUT}
+        COMMAND
+            ${GLSLC_EXECUTABLE} ${SM_ARCANE_SHADER_INCLUDE_OPTIONS} ${SHADER_SOURCE} -o ${SM_ARCANE_SHADER_SPV_OUTPUT}
         COMMAND
             ${CMAKE_COMMAND} -E echo "Compiled the SPIR-V binary shader file from the shader ${RELATIVE_SHADER_SOURCE}"
         COMMAND_EXPAND_LISTS
