@@ -5,5 +5,7 @@ target_sources(
             passes/common.hpp
             passes/gbuffer.cpp
             passes/gbuffer.hpp
+            passes/lighting.cpp
+            passes/lighting.hpp
             passes/wireframe.cpp
             passes/wireframe.hpp)

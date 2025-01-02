@@ -14,6 +14,10 @@ layout(location = 2) out vec3 fragment_normal_color;
 layout(set = 0, binding = 0) uniform global_ubo_s {
     mat4 projection;
     mat4 view;
+    mat4 inverse_view;
+    vec4 ambient_light_color;
+    vec4 light_color;
+    vec3 light_position;
 }
 global_ubo;
 

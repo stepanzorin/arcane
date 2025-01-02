@@ -63,6 +63,9 @@ struct global_ubo_s {
     glm::f32mat4 projection{1.0f};
     glm::f32mat4 view{1.0f};
     glm::f32mat4 inverseView{1.0f};
+    glm::f32vec4 ambient_light_color{1.0f, 1.0f, 1.0f, 0.10f};
+    glm::f32vec4 light_color{1.0};
+    glm::f32vec3 light_position{0.0f, 0.0f, -1.0f};
 };
 
 [[nodiscard]] std::vector<vulkan::DeviceMemoryBuffer> create_global_ubos(
@@ -79,8 +82,8 @@ struct global_ubo_s {
     return global_ubos;
 }
 
-vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
-                                              const std::vector<vk::DescriptorPoolSize> &pool_sizes) {
+[[nodiscard]] vk::raii::DescriptorPool make_descriptor_pool(const vk::raii::Device &device,
+                                                            const std::vector<vk::DescriptorPoolSize> &pool_sizes) {
     assert(!pool_sizes.empty());
     const auto max_sets = static_cast<std::uint32_t>(std::accumulate(
             pool_sizes.begin(),
@@ -99,7 +102,9 @@ vk::raii::DescriptorPool make_descriptor_pool(vk::raii::Device const &device,
 
     auto global_descriptor_set_layout = make_descriptor_set_layout(
             device.device(),
-            {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}});
+            {{vk::DescriptorType::eUniformBuffer,
+              1,
+              vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment}});
 
     const auto layouts = std::vector<vk::DescriptorSetLayout>{g_max_frames_in_flight, *global_descriptor_set_layout};
     const auto global_desc_set_alloc_info = vk::DescriptorSetAllocateInfo{*global_descriptor_pool,
@@ -138,7 +143,7 @@ Renderer::Renderer(vulkan::Device &device,
           return frame_syncs;
       }()},
       m_gbuffer_pass{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info},
-      m_wireframe_pass{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info} {}
+      m_lighting_pass{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info} {}
 
 void Renderer::begin_frame() {
     m_swapchain->acquire_next_image(*m_frame_syncs[m_current_frame_info.frame_index].semaphores.image_available);
@@ -209,8 +214,10 @@ void Renderer::render(const render_context_s args) {
             {.descriptor_set_layout = *m_resources.global_descriptor_set_layout,
              .descriptor_set = *m_resources.global_descriptor_sets[m_current_frame_info.frame_index]}};
 
-    {
-        m_gbuffer_pass.render(render_args); //
+    { // deferred shading
+        // TODO: to organize a render-bridge for passes (support the render attachments)
+        m_gbuffer_pass.render(render_args);
+        m_lighting_pass.render(render_args);
     }
 
     end_frame();
