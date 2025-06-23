@@ -123,10 +123,132 @@ struct global_ubo_s {
             .global_descriptor_sets = std::move(global_descriptor_sets)};
 }
 
+[[nodiscard]] render::passes::gpu_resources_s create_gpu_resources_for_frame(const vulkan::Device &device,
+                                                                             const vk::Extent2D extent,
+                                                                             const vk::Format color_format,
+                                                                             const vk::Format depth_format) {
+    auto gpu_resources = render::passes::gpu_resources_s{
+            .gbuffer =
+                    {
+                            .albedo = device.create_device_memory_image(
+                                    color_format,
+                                    extent,
+                                    vk::ImageTiling::eOptimal,
+                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    vk::ImageAspectFlagBits::eColor),
+                            .normal = device.create_device_memory_image(
+                                    color_format,
+                                    extent,
+                                    vk::ImageTiling::eOptimal,
+                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    vk::ImageAspectFlagBits::eColor),
+                            .specular = device.create_device_memory_image(
+                                    color_format,
+                                    extent,
+                                    vk::ImageTiling::eOptimal,
+                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    vk::ImageAspectFlagBits::eColor),
+                            .albedo_roughness = device.create_device_memory_image(
+                                    color_format,
+                                    extent,
+                                    vk::ImageTiling::eOptimal,
+                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    vk::ImageAspectFlagBits::eColor),
+                            .ambient_occlusion = device.create_device_memory_image(
+                                    color_format,
+                                    extent,
+                                    vk::ImageTiling::eOptimal,
+                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    vk::ImageAspectFlagBits::eColor),
+                            .metalness = device.create_device_memory_image(
+                                    color_format,
+                                    extent,
+                                    vk::ImageTiling::eOptimal,
+                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    vk::ImageAspectFlagBits::eColor),
+                            .roughness = device.create_device_memory_image(
+                                    color_format,
+                                    extent,
+                                    vk::ImageTiling::eOptimal,
+                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    vk::ImageAspectFlagBits::eColor),
+                    },
+            .depth_stencil = device.create_device_memory_image(
+                    depth_format,
+                    extent,
+                    vk::ImageTiling::eOptimal,
+                    vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
+                    vk::ImageLayout::eUndefined,
+                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                    vk::ImageAspectFlagBits::eDepth),
+            .hdr = device.create_device_memory_image(
+                    color_format,
+                    extent,
+                    vk::ImageTiling::eOptimal,
+                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+                    vk::ImageLayout::eUndefined,
+                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                    vk::ImageAspectFlagBits::eColor)};
+
+
+    device.set_object_name(*gpu_resources.gbuffer.albedo.handle.image, "gpu_resources_s::gbuffer_s::albedo.image");
+    device.set_object_name(*gpu_resources.gbuffer.albedo.handle.image_view,
+                           "gpu_resources_s::gbuffer_s::albedo.image_view");
+
+    device.set_object_name(*gpu_resources.gbuffer.normal.handle.image, "gpu_resources_s::gbuffer_s::normal.image");
+    device.set_object_name(*gpu_resources.gbuffer.normal.handle.image, "gpu_resources_s::gbuffer_s::normal.image_view");
+
+    device.set_object_name(*gpu_resources.gbuffer.specular.handle.image, "gpu_resources_s::gbuffer_s::specular.image");
+    device.set_object_name(*gpu_resources.gbuffer.specular.handle.image_view,
+                           "gpu_resources_s::gbuffer_s::specular.image_view");
+
+    device.set_object_name(*gpu_resources.gbuffer.albedo_roughness.handle.image,
+                           "gpu_resources_s::gbuffer_s::albedo_roughness.image");
+    device.set_object_name(*gpu_resources.gbuffer.albedo_roughness.handle.image_view,
+                           "gpu_resources_s::gbuffer_s::albedo_roughness.image_view");
+
+    device.set_object_name(*gpu_resources.gbuffer.ambient_occlusion.handle.image,
+                           "gpu_resources_s::gbuffer_s::ambient_occlusion.image");
+    device.set_object_name(*gpu_resources.gbuffer.ambient_occlusion.handle.image_view,
+                           "gpu_resources_s::gbuffer_s::ambient_occlusion.image_view");
+
+    device.set_object_name(*gpu_resources.gbuffer.metalness.handle.image,
+                           "gpu_resources_s::gbuffer_s::metalness.image");
+    device.set_object_name(*gpu_resources.gbuffer.metalness.handle.image_view,
+                           "gpu_resources_s::gbuffer_s::metalness.image_view");
+
+    device.set_object_name(*gpu_resources.gbuffer.roughness.handle.image,
+                           "gpu_resources_s::gbuffer_s::roughness.image");
+    device.set_object_name(*gpu_resources.gbuffer.roughness.handle.image_view,
+                           "gpu_resources_s::gbuffer_s::roughness.image_view");
+
+    device.set_object_name(*gpu_resources.depth_stencil.handle.image, "gpu_resources_s::depth_stencil.image");
+    device.set_object_name(*gpu_resources.depth_stencil.handle.image_view, "gpu_resources_s::depth_stencil.image_view");
+
+    device.set_object_name(*gpu_resources.hdr.handle.image, "gpu_resources_s::hdr.image");
+    device.set_object_name(*gpu_resources.hdr.handle.image_view, "gpu_resources_s.hdr.image_view");
+
+    return gpu_resources;
+}
+
 } // namespace
 
 Renderer::Renderer(vulkan::Device &device,
-                   const std::unique_ptr<vulkan::Swapchain> &swapchain,
+                   std::unique_ptr<vulkan::Swapchain> &swapchain,
                    std::shared_ptr<spdlog::logger> renderer_logger)
     : m_logger{std::move(renderer_logger)},
       m_device{device},
@@ -142,8 +264,7 @@ Renderer::Renderer(vulkan::Device &device,
           }
           return frame_syncs;
       }()},
-      m_gbuffer_pass{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info},
-      m_lighting_pass{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info} {}
+      m_deferred_shading{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info} {}
 
 void Renderer::begin_frame() {
     m_swapchain->acquire_next_image(*m_frame_syncs[m_current_frame_info.frame_index].semaphores.image_available);
@@ -214,11 +335,12 @@ void Renderer::render(const render_context_s args) {
             {.descriptor_set_layout = *m_resources.global_descriptor_set_layout,
              .descriptor_set = *m_resources.global_descriptor_sets[m_current_frame_info.frame_index]}};
 
-    { // deferred shading
-        // TODO: to organize a render-bridge for passes (support the render attachments)
-        m_gbuffer_pass.render(render_args);
-        m_lighting_pass.render(render_args);
-    }
+    auto gpu_resources = create_gpu_resources_for_frame(m_device,
+                                                        m_swapchain->extent(),
+                                                        m_swapchain->color_format(),
+                                                        m_swapchain->depth_format());
+
+    m_deferred_shading.render(render_args, gpu_resources);
 
     end_frame();
 }

@@ -12,9 +12,7 @@
 
 #include "frame.hpp"
 #include "primitive_graphics/mesh.hpp"
-#include "render/passes/gbuffer.hpp"
-#include "render/passes/lighting.hpp"
-#include "render/passes/wireframe.hpp"
+#include "render/passes/deferred_shading.hpp"
 #include "scene/scene.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/swapchain.hpp"
@@ -38,7 +36,7 @@ struct render_context_s {
 class Renderer {
 public:
     Renderer(vulkan::Device &device,
-             const std::unique_ptr<vulkan::Swapchain> &swapchain,
+             std::unique_ptr<vulkan::Swapchain> &swapchain,
              std::shared_ptr<spdlog::logger> renderer_logger);
 
     void begin_frame();
@@ -69,8 +67,7 @@ private:
     };
     std::array<frame_sync_s, g_max_frames_in_flight> m_frame_syncs{};
 
-    render::passes::Gbuffer m_gbuffer_pass;
-    render::passes::Lighting m_lighting_pass;
+    render::passes::DeferredShading m_deferred_shading;
 };
 
 } // namespace sm::arcane

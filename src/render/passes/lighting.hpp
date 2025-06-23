@@ -15,27 +15,26 @@ namespace sm::arcane::render::passes {
 
 class Lighting {
 public:
-    Lighting(const pass_context_s &pass_context, const frame_info_s &frame_info)
+    Lighting(const pass_context_s &pass_context)
         : m_swapchain{pass_context.swapchain},
-          m_frame_info{frame_info},
           m_draw_point_light_system{pass_context} {}
 
-    void render(const render_args_s &args) const {
-        begin(args.command_buffer);
+    void render(const render_args_s &args, gpu_resources_s &global_gpu_resources) const {
+        begin(args.command_buffer, global_gpu_resources);
         {
             m_draw_point_light_system.render(args); //
         }
-        end(args.command_buffer);
+        end(args.command_buffer, global_gpu_resources);
     }
 
 private:
-    void begin(const vk::raii::CommandBuffer &command_buffer) const {
+    void begin(const vk::raii::CommandBuffer &command_buffer, gpu_resources_s &global_gpu_resources) const {
         constexpr auto clear_values = std::array<vk::ClearValue, 2>{
                 vk::ClearColorValue{std::array{0.2f, 0.2f, 0.2f, 0.2f}},
                 vk::ClearDepthStencilValue{1.0f, 0}};
 
         vulkan::image_layout_transition(*command_buffer,
-                                        m_swapchain->color_images()[m_frame_info.image_index],
+                                        *global_gpu_resources.gbuffer.albedo.handle.image,
                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
                                         vk::PipelineStageFlagBits::eColorAttachmentOutput,
                                         vk::AccessFlagBits::eNone,
@@ -45,13 +44,13 @@ private:
                                         g_color_subresource_range);
 
         vulkan::image_layout_transition(*command_buffer,
-                                        *m_swapchain->depth_image().image,
+                                        *global_gpu_resources.depth_stencil.handle.image,
                                         vk::ImageLayout::eUndefined,
                                         vk::ImageLayout::eDepthAttachmentOptimal,
                                         g_depth_subresource_range);
 
         const auto color_attachment = vk::RenderingAttachmentInfoKHR{
-                m_swapchain->color_image_views()[m_frame_info.image_index],
+                *global_gpu_resources.gbuffer.albedo.handle.image_view,
                 vk::ImageLayout::eColorAttachmentOptimal,
                 vk::ResolveModeFlagBits::eNone,
                 {},
@@ -60,14 +59,15 @@ private:
                 vk::AttachmentStoreOp::eStore,
                 clear_values[0]};
 
-        const auto depth_attachment = vk::RenderingAttachmentInfoKHR{m_swapchain->depth_image().image_view,
-                                                                     vk::ImageLayout::eDepthAttachmentOptimal,
-                                                                     vk::ResolveModeFlagBits::eNone,
-                                                                     {},
-                                                                     {},
-                                                                     vk::AttachmentLoadOp::eClear,
-                                                                     vk::AttachmentStoreOp::eDontCare,
-                                                                     clear_values[1]};
+        const auto depth_attachment = vk::RenderingAttachmentInfoKHR{
+                *global_gpu_resources.depth_stencil.handle.image_view,
+                vk::ImageLayout::eDepthAttachmentOptimal,
+                vk::ResolveModeFlagBits::eNone,
+                {},
+                {},
+                vk::AttachmentLoadOp::eClear,
+                vk::AttachmentStoreOp::eDontCare,
+                clear_values[1]};
 
         const auto rendering_info = vk::RenderingInfoKHR{
                 {},
@@ -94,18 +94,11 @@ private:
         command_buffer.setViewport(0, viewport);
     }
 
-    void end(const vk::raii::CommandBuffer &command_buffer) const {
+    void end(const vk::raii::CommandBuffer &command_buffer, gpu_resources_s &global_gpu_resources) const {
         command_buffer.endRendering();
-
-        vulkan::image_layout_transition(*command_buffer,
-                                        m_swapchain->color_images()[m_frame_info.image_index],
-                                        vk::ImageLayout::eColorAttachmentOptimal,
-                                        vk::ImageLayout::ePresentSrcKHR,
-                                        g_color_subresource_range);
     }
 
     const std::unique_ptr<vulkan::Swapchain> &m_swapchain;
-    const frame_info_s &m_frame_info;
 
     lightings::DrawPointLightSystem m_draw_point_light_system;
 };
