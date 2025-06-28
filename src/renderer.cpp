@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 
+
 #include <chrono>
 #include <cstddef>
 #include <limits>
@@ -7,6 +8,9 @@
 #include <stdexcept>
 #include <tuple>
 #include <utility>
+
+#include "render/common.hpp"
+#include "render/passes/common.hpp"
 
 namespace sm::arcane {
 
@@ -264,7 +268,7 @@ Renderer::Renderer(vulkan::Device &device,
           }
           return frame_syncs;
       }()},
-      m_deferred_shading{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info} {}
+      m_gbuffer{{device, m_swapchain, m_resources.global_descriptor_set_layout}, m_current_frame_info} {}
 
 void Renderer::begin_frame() {
     m_swapchain->acquire_next_image(*m_frame_syncs[m_current_frame_info.frame_index].semaphores.image_available);
@@ -339,8 +343,7 @@ void Renderer::render(const render_context_s args) {
                                                         m_swapchain->extent(),
                                                         m_swapchain->color_format(),
                                                         m_swapchain->depth_format());
-
-    m_deferred_shading.render(render_args, gpu_resources);
+    m_gbuffer.render(render_args, gpu_resources);
 
     end_frame();
 }

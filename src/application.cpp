@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace sm::arcane {
 
 Application::Application(const app_config_s &config)

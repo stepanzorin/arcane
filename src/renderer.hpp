@@ -12,7 +12,7 @@
 
 #include "frame.hpp"
 #include "primitive_graphics/mesh.hpp"
-#include "render/passes/deferred_shading.hpp"
+#include "render/passes/gbuffer.hpp"
 #include "scene/scene.hpp"
 #include "vulkan/device.hpp"
 #include "vulkan/swapchain.hpp"
@@ -67,7 +67,7 @@ private:
     };
     std::array<frame_sync_s, g_max_frames_in_flight> m_frame_syncs{};
 
-    render::passes::DeferredShading m_deferred_shading;
+    render::passes::Gbuffer m_gbuffer;
 };
 
 } // namespace sm::arcane
