@@ -20,16 +20,16 @@ public:
           m_frame_info{frame_info},
           m_draw_game_object_system{pass_context} {}
 
-    void render(const render_args_s &args, gpu_resources_s &global_gpu_resources) const {
-        begin(args.command_buffer, global_gpu_resources);
+    void render(const render_args_s &args) const {
+        begin(args.command_buffer);
         {
             m_draw_game_object_system.render(args); //
         }
-        end(args.command_buffer, global_gpu_resources);
+        end(args.command_buffer);
     }
 
 private:
-    void begin(const vk::raii::CommandBuffer &command_buffer, gpu_resources_s &global_gpu_resources) const {
+    void begin(const vk::raii::CommandBuffer &command_buffer) const {
         constexpr auto clear_values = std::array<vk::ClearValue, 2>{
                 vk::ClearColorValue{std::array{0.2f, 0.2f, 0.2f, 0.2f}},
                 vk::ClearDepthStencilValue{1.0f, 0}};
@@ -91,7 +91,7 @@ private:
         command_buffer.setViewport(0, viewport);
     }
 
-    void end(const vk::raii::CommandBuffer &command_buffer, gpu_resources_s &global_gpu_resources) const {
+    void end(const vk::raii::CommandBuffer &command_buffer) const {
         command_buffer.endRendering();
 
         vulkan::image_layout_transition(*command_buffer,

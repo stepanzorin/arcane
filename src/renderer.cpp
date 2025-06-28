@@ -338,12 +338,8 @@ void Renderer::render(const render_context_s args) {
             command_buffer,
             {.descriptor_set_layout = *m_resources.global_descriptor_set_layout,
              .descriptor_set = *m_resources.global_descriptor_sets[m_current_frame_info.frame_index]}};
-
-    auto gpu_resources = create_gpu_resources_for_frame(m_device,
-                                                        m_swapchain->extent(),
-                                                        m_swapchain->color_format(),
-                                                        m_swapchain->depth_format());
-    m_gbuffer.render(render_args, gpu_resources);
+    ;
+    m_gbuffer.render(render_args);
 
     end_frame();
 }
